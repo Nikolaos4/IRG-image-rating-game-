@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  user_id    Int       @id @default(autoincrement())
+  username   String
+  email      String    @unique
+  password   String
+  role_id    Int @default(1)
+  created_at DateTime @default(now())
+
+  role        Role         @relation(fields: [role_id], references: [role_id])
+  rating      UserRating?
+  bans        UserBan[]    @relation("BannedUser")
+  bans_issued UserBan[]    @relation("BannedBy")
+  memberships GameMember[]
+  votes       Vote[]
+
+  @@map("user")
+}
+
+model UserRating {
+  user_id Int  @id
+  wins    Int
+  losses  Int
+
+  user User @relation(fields: [user_id], references: [user_id])
+
+  @@map("user_rating")
+}
+
+model UserBan {
+  user_id    Int
+  reason     String
+  banned_by  Int
+  created_at DateTime
+
+  user   User @relation("BannedUser", fields: [user_id], references: [user_id])
+  banner User @relation("BannedBy", fields: [banned_by], references: [user_id])
+
+  @@id([user_id, banned_by])
+  @@map("user_ban")
+}
+
+model Role {
+  role_id Int     @id
+  name    String
+
+  users User[]
+
+  @@map("role")
+}
+
+model Image {
+  image_id   Int       @id @default(autoincrement())
+  url        String
+  created_at DateTime
+
+  ratings       ImageRating[]
+  game_images   GameImage[]
+  rounds_first  Round[]       @relation("FirstImage")
+  rounds_second Round[]       @relation("SecondImage")
+  votes         Vote[]
+
+  @@map("image")
+}
+
+model Criteria {
+  criteria_id Int       @id
+  name        String
+  description String
+  created_at  DateTime
+
+  games         Game[]
+  image_ratings ImageRating[]
+
+  @@map("criteria")
+}
+
+model ImageRating {
+  image_id    Int
+  criteria_id Int
+  votes       Int
+
+  image    Image    @relation(fields: [image_id], references: [image_id])
+  criteria Criteria @relation(fields: [criteria_id], references: [criteria_id])
+
+  @@id([image_id, criteria_id])
+  @@map("image_rating")
+}
+
+model Game {
+  game_id       Int       @id @default(autoincrement())
+  criteria_id   Int
+  status        String
+  invite_token  String   @unique
+  current_round Int
+  max_round     Int
+  created_at    DateTime
+  started_at    DateTime
+  finished_at   DateTime
+
+  criteria    Criteria    @relation(fields: [criteria_id], references: [criteria_id])
+  members     GameMember[]
+  game_images GameImage[]
+  rounds      Round[]
+
+  @@map("game")
+}
+
+model GameMember {
+  game_member_id Int  @id @default(autoincrement())
+  game_id        Int
+  user_id        Int
+
+  game Game? @relation(fields: [game_id], references: [game_id])
+  user User? @relation(fields: [user_id], references: [user_id])
+
+  @@map("game_member")
+}
+
+model GameImage {
+  game_image_id Int  @id @default(autoincrement())
+  image_id      Int
+  game_id       Int
+
+  image Image? @relation(fields: [image_id], references: [image_id])
+  game  Game?  @relation(fields: [game_id], references: [game_id])
+
+  @@map("game_image")
+}
+
+model Round {
+  round_id     Int  @id @default(autoincrement())
+  game_id      Int
+  first_image  Int
+  second_image Int
+
+  game        Game  @relation(fields: [game_id], references: [game_id])
+  firstImage  Image @relation("FirstImage", fields: [first_image], references: [image_id])
+  secondImage Image @relation("SecondImage", fields: [second_image], references: [image_id])
+  votes       Vote[]
+
+  @@map("round")
+}
+
+model Vote {
+  vote_id        Int  @id @default(autoincrement())
+  round_id       Int
+  user_id        Int
+  voted_image_id Int
+
+  round       Round @relation(fields: [round_id], references: [round_id])
+  user        User  @relation(fields: [user_id], references: [user_id])
+  voted_image Image @relation(fields: [voted_image_id], references: [image_id])
+
+  @@map("vote")
+}
