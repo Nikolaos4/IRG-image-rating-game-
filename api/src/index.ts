@@ -44,7 +44,19 @@ app.register(swagger, {
                 description: "Development server",
             },
         ],
-        tags: [{ name: "auth", description: "auth" }],
+        tags: [
+            { name: "auth", description: "auth" },
+            { name: "game", description: "game" },
+        ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT",
+                },
+            },
+        },
     },
     ...fastifyZodOpenApiTransformers,
 });
@@ -58,6 +70,7 @@ app.setSerializerCompiler(serializerCompiler);
 
 app.register(autoload, {
     dir: join(__dirname, "routes"),
+    routeParams: true,
     options: { prefix: "/api" },
 });
 

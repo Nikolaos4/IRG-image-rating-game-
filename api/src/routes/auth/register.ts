@@ -38,7 +38,7 @@ export default async function register(app: FastifyInstance) {
 
             const token = app.jwt.sign(
                 {
-                    userId: user.user_id,
+                    user_id: user.user_id,
                     role: user.role_id,
                 },
                 { expiresIn: "7d" },

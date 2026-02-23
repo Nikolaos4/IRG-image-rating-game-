@@ -14,11 +14,11 @@ datasource db {
 }
 
 model User {
-  user_id    Int       @id @default(autoincrement())
+  user_id    Int      @id @default(autoincrement())
   username   String
-  email      String    @unique
+  email      String   @unique
   password   String
-  role_id    Int @default(1)
+  role_id    Int      @default(1)
   created_at DateTime @default(now())
 
   role        Role         @relation(fields: [role_id], references: [role_id])
@@ -27,12 +27,13 @@ model User {
   bans_issued UserBan[]    @relation("BannedBy")
   memberships GameMember[]
   votes       Vote[]
+  games_created       Game[]
 
   @@map("user")
 }
 
 model UserRating {
-  user_id Int  @id
+  user_id Int @id
   wins    Int
   losses  Int
 
@@ -45,7 +46,7 @@ model UserBan {
   user_id    Int
   reason     String
   banned_by  Int
-  created_at DateTime
+  created_at DateTime @default(now())
 
   user   User @relation("BannedUser", fields: [user_id], references: [user_id])
   banner User @relation("BannedBy", fields: [banned_by], references: [user_id])
@@ -55,7 +56,7 @@ model UserBan {
 }
 
 model Role {
-  role_id Int     @id
+  role_id Int    @id
   name    String
 
   users User[]
@@ -64,9 +65,9 @@ model Role {
 }
 
 model Image {
-  image_id   Int       @id @default(autoincrement())
+  image_id   Int      @id @default(autoincrement())
   url        String
-  created_at DateTime
+  created_at DateTime @default(now())
 
   ratings       ImageRating[]
   game_images   GameImage[]
@@ -78,10 +79,10 @@ model Image {
 }
 
 model Criteria {
-  criteria_id Int       @id
+  criteria_id Int      @id
   name        String
   description String
-  created_at  DateTime
+  created_at  DateTime @default(now())
 
   games         Game[]
   image_ratings ImageRating[]
@@ -104,24 +105,27 @@ model ImageRating {
 model Game {
   game_id       Int       @id @default(autoincrement())
   criteria_id   Int
+  public_id     String    @unique @default(uuid())
   status        String
-  invite_token  String   @unique
-  current_round Int
-  max_round     Int
-  created_at    DateTime
-  started_at    DateTime
-  finished_at   DateTime
+  current_round Int       @default(0)
+  max_rounds     Int?      @default(5)
+  max_players    Int?      @default(2)
+  created_at    DateTime  @default(now())
+  created_by    Int
+  started_at    DateTime?
+  finished_at   DateTime?
 
-  criteria    Criteria    @relation(fields: [criteria_id], references: [criteria_id])
+  criteria    Criteria     @relation(fields: [criteria_id], references: [criteria_id])
   members     GameMember[]
   game_images GameImage[]
   rounds      Round[]
+  creator     User         @relation(fields: [created_by], references: [user_id])
 
   @@map("game")
 }
 
 model GameMember {
-  game_member_id Int  @id @default(autoincrement())
+  game_member_id Int @id @default(autoincrement())
   game_id        Int
   user_id        Int
 
@@ -132,7 +136,7 @@ model GameMember {
 }
 
 model GameImage {
-  game_image_id Int  @id @default(autoincrement())
+  game_image_id Int @id @default(autoincrement())
   image_id      Int
   game_id       Int
 
@@ -143,21 +147,21 @@ model GameImage {
 }
 
 model Round {
-  round_id     Int  @id @default(autoincrement())
+  round_id     Int @id @default(autoincrement())
   game_id      Int
   first_image  Int
   second_image Int
 
-  game        Game  @relation(fields: [game_id], references: [game_id])
-  firstImage  Image @relation("FirstImage", fields: [first_image], references: [image_id])
-  secondImage Image @relation("SecondImage", fields: [second_image], references: [image_id])
+  game        Game   @relation(fields: [game_id], references: [game_id])
+  firstImage  Image  @relation("FirstImage", fields: [first_image], references: [image_id])
+  secondImage Image  @relation("SecondImage", fields: [second_image], references: [image_id])
   votes       Vote[]
 
   @@map("round")
 }
 
 model Vote {
-  vote_id        Int  @id @default(autoincrement())
+  vote_id        Int @id @default(autoincrement())
   round_id       Int
   user_id        Int
   voted_image_id Int
