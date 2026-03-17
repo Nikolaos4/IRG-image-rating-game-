@@ -50,6 +50,7 @@ app.register(swagger, {
         tags: [
             { name: "auth", description: "auth" },
             { name: "game", description: "game" },
+            { name: "theme", description: "theme" },
         ],
         components: {
             securitySchemes: {
