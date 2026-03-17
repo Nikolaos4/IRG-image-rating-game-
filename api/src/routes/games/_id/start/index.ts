@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { prisma } from "../../../../lib/prisma.js";
+import { publishRoundUpdate } from "../../../../lib/game-round-realtime.js";
 
 import { GetGameParams } from "../index.js";
 import { authenticate } from "../../../../lib/authenticate.js";
@@ -48,6 +49,7 @@ export default async function startGame(app: FastifyInstance) {
                 },
                 data: {
                     status: "active",
+                    current_round: 1,
                     started_at: new Date(),
                     game_images: {
                         createMany: {
@@ -56,8 +58,16 @@ export default async function startGame(app: FastifyInstance) {
                             })),
                         },
                     },
+                    rounds: {
+                        create: {
+                            first_image: images[0].image_id,
+                            second_image: images[1].image_id,
+                        },
+                    },
                 },
             });
+
+            await publishRoundUpdate(data.public_id);
 
             return reply.status(200).send({
                 message: "Game started successfully",

@@ -35,6 +35,7 @@ export default async function getGame(app: FastifyInstance) {
                                 user: true,
                             },
                         },
+                        creator: true,
                     },
                 })
                 .catch(() => {
@@ -51,10 +52,17 @@ export default async function getGame(app: FastifyInstance) {
                     current_round: data.current_round,
                     criteria_id: data.criteria_id,
 
-                    members: data.members.map((member) => ({
-                        user_id: member.user.user_id,
-                        username: member.user.username,
-                    })),
+                    creator: {
+                        user_id: data.creator.user_id,
+                        username: data.creator.username,
+                    },
+
+                    members: data.members
+                        .filter((member) => data.creator.user_id !== member.user.user_id)
+                        .map((member) => ({
+                            user_id: member.user.user_id,
+                            username: member.user.username,
+                        })),
                 },
             });
         },

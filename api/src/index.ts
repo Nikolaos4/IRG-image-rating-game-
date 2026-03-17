@@ -6,6 +6,7 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
+import websocket from "@fastify/websocket";
 
 import "dotenv/config";
 
@@ -29,6 +30,8 @@ await app.register(fastifyZodOpenApiPlugin);
 app.register(jwt, {
     secret: process.env.JWT_SECRET,
 });
+
+app.register(websocket);
 
 app.register(swagger, {
     openapi: {
