@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Header from "./components/Header/Header";
 import ThemesPage from "./pages/ThemesPage/ThemesPage";
+import GamePage from "./pages/GamePage/GamePage";
 import { useAuth } from "./contexts/AuthContext";
 
 function GuestOnlyRoute({ children }: { children: ReactNode }) {
@@ -60,6 +61,14 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <ThemesPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/game/:id"
+                    element={
+                        <ProtectedRoute>
+                            <GamePage />
                         </ProtectedRoute>
                     }
                 />
