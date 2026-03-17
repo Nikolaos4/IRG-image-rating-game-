@@ -27,6 +27,25 @@ function GuestOnlyRoute({ children }: { children: ReactNode }) {
     return children;
 }
 
+function ProtectedRoute({ children }: { children: ReactNode }) {
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return null;
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <Navigate
+                to="/"
+                replace
+            />
+        );
+    }
+
+    return children;
+}
+
 function App() {
     return (
         <>
@@ -38,7 +57,11 @@ function App() {
                 />
                 <Route
                     path="/themes"
-                    element={<ThemesPage />}
+                    element={
+                        <ProtectedRoute>
+                            <ThemesPage />
+                        </ProtectedRoute>
+                    }
                 />
                 <Route
                     path="/login"
