@@ -17,5 +17,16 @@ export type RegisterRequest = {
 
 export type AuthUser = {
     user_id: number;
-    role?: number;
+    username: string;
+    email: string;
+    role: string;
+    created_at: string;
+    rating: {
+        wins: number;
+        losses: number;
+    };
+};
+
+export type MeResponse = {
+    user: AuthUser;
 };
