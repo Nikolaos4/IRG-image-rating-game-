@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import bcrypt from "bcrypt";
-import { prisma } from "../../lib/prisma.js";
+import { prisma } from "@/lib/prisma.js";
 
 export const RegisterRequestBody = z.object({
     email: z.email().meta({ example: "you@example.com" }),

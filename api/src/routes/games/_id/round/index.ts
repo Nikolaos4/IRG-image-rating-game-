@@ -1,10 +1,10 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
-import { prisma } from "../../../../lib/prisma.js";
-import { authenticate } from "../../../../lib/authenticate.js";
+import { prisma } from "@/lib/prisma.js";
+import { authenticate } from "@/lib/authenticate.js";
 import { GetGameParams } from "../index.js";
-import { publishRoundUpdate } from "../../../../lib/game-round-realtime.js";
+import { publishRoundUpdate } from "@/lib/game-round-realtime.js";
 
 const VoteRoundRequestBody = z.object({
     voted_image_id: z.int().positive().meta({

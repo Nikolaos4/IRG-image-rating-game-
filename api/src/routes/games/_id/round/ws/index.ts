@@ -1,8 +1,8 @@
 import { FastifyInstance } from "fastify";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { z } from "zod";
-import { prisma } from "../../../../../lib/prisma.js";
-import { createRoundStateMessage, registerRoundClient } from "../../../../../lib/game-round-realtime.js";
+import { prisma } from "@/lib/prisma.js";
+import { createRoundStateMessage, registerRoundClient } from "@/lib/game-round-realtime.js";
 import { GetGameParams } from "../../index.js";
 
 const RoundWsQuery = z.object({

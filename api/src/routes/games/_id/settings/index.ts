@@ -1,10 +1,10 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
-import { prisma } from "../../../../lib/prisma.js";
+import { prisma } from "@/lib/prisma.js";
 
 import { GetGameParams } from "../index.js";
-import { authenticate } from "../../../../lib/authenticate.js";
+import { authenticate } from "@/lib/authenticate.js";
 
 export const EditGameRequestBody = z
     .object({

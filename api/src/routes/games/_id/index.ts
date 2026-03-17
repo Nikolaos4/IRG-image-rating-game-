@@ -1,8 +1,8 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
-import { prisma } from "../../../lib/prisma.js";
-import { authenticate } from "../../../lib/authenticate.js";
+import { prisma } from "@/lib/prisma.js";
+import { authenticate } from "@/lib/authenticate.js";
 
 export const GetGameParams = z.object({
     id: z.uuid().meta({ example: "123e4567-e89b-12d3-a456-426614174000", description: "The id of the game" }),

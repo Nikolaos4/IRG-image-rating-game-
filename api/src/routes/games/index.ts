@@ -1,8 +1,8 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
-import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../lib/authenticate.js";
+import { prisma } from "@/lib/prisma.js";
+import { authenticate } from "@/lib/authenticate.js";
 
 export const CreateGameRequestBody = z.object({
     criteria: z.int().positive().meta({ example: 1, description: "The criteria_id for the game" }),

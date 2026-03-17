@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
-import { prisma } from "../../lib/prisma.js";
-import { authenticate } from "../../lib/authenticate.js";
+import { prisma } from "@/lib/prisma.js";
+import { authenticate } from "@/lib/authenticate.js";
 
 export default async function me(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().get(

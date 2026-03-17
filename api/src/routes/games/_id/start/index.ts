@@ -1,12 +1,12 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
-import { prisma } from "../../../../lib/prisma.js";
-import { publishRoundUpdate } from "../../../../lib/game-round-realtime.js";
+import { prisma } from "@/lib/prisma.js";
+import { publishRoundUpdate } from "@/lib/game-round-realtime.js";
 
 import { GetGameParams } from "../index.js";
-import { authenticate } from "../../../../lib/authenticate.js";
-import { Image } from "../../../../generated/prisma/client.js";
+import { authenticate } from "@/lib/authenticate.js";
+import { Image } from "@/generated/prisma/client.js";
 
 export default async function startGame(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().post(
