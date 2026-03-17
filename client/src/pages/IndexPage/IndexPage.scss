@@ -1,0 +1,17 @@
+.hero {
+    height: calc(100dvh - 70px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    h1 {
+        color: var(--color-primary);
+        font-size: 4rem;
+        margin: 0;
+    }
+
+    p {
+        width: min(100%, 680px);
+    }
+}
