@@ -1,0 +1,27 @@
+.theme-item {
+    border: 1px solid var(--color-border-colored);
+    border-radius: 16px;
+    overflow: hidden;
+
+    h3 {
+        margin: 0;
+    }
+
+    img {
+        width: 100%;
+        object-fit: cover;
+        aspect-ratio: 16 / 9;
+    }
+
+    .data {
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        gap: 8px;
+
+        .images-count {
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+        }
+    }
+}

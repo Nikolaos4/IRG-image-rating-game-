@@ -1,0 +1,35 @@
+.app-header {
+    display: flex;
+    align-items: center;
+    height: 70px;
+    padding: 8px;
+
+    &__title {
+        color: var(--color-primary);
+        font-weight: bold;
+        text-decoration: none;
+        font-size: 1.5rem;
+    }
+
+    &__right-section {
+        margin-left: auto;
+
+        .current-user {
+            display: flex;
+            align-items: center;
+
+            &__avatar {
+                width: 58px;
+                height: 58px;
+                border-radius: 50%;
+                background-color: var(--color-primary);
+                margin-right: 8px;
+            }
+
+            &__name {
+                font-weight: 500;
+                font-size: 1.25rem;
+            }
+        }
+    }
+}
