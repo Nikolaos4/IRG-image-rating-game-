@@ -26,6 +26,22 @@ export default async function getResult(app: FastifyInstance) {
                     public_id: id,
                 },
                 include: {
+                    creator: {
+                        select: {
+                            user_id: true,
+                            username: true,
+                        },
+                    },
+                    members: {
+                        select: {
+                            user: {
+                                select: {
+                                    user_id: true,
+                                    username: true,
+                                },
+                            },
+                        },
+                    },
                     criteria: true,
                     game_images: {
                         include: {
@@ -53,6 +69,8 @@ export default async function getResult(app: FastifyInstance) {
                 },
                 select: {
                     round_id: true,
+                    first_image: true,
+                    second_image: true,
                 },
             });
 
@@ -67,10 +85,34 @@ export default async function getResult(app: FastifyInstance) {
                               },
                           },
                           select: {
+                              round_id: true,
+                              user_id: true,
                               voted_image_id: true,
                           },
                       })
                     : [];
+
+            const imageIds = Array.from(new Set(rounds.flatMap((round) => [round.first_image, round.second_image])));
+
+            const imageRatings =
+                imageIds.length > 0
+                    ? await prisma.imageRating.findMany({
+                          where: {
+                              criteria_id: game.criteria_id,
+                              image_id: {
+                                  in: imageIds,
+                              },
+                          },
+                          select: {
+                              image_id: true,
+                              votes: true,
+                          },
+                      })
+                    : [];
+
+            const ratingByImage = new Map<number, number>(
+                imageRatings.map((rating) => [rating.image_id, rating.votes]),
+            );
 
             const voteCountByImage = new Map<number, number>();
 
@@ -97,6 +139,40 @@ export default async function getResult(app: FastifyInstance) {
             const maxVotes = results[0]?.votes ?? 0;
             const winners = results.filter((item) => item.votes === maxVotes);
 
+            const participantsMap = new Map<number, string>();
+            participantsMap.set(game.creator.user_id, game.creator.username);
+            for (const member of game.members) {
+                participantsMap.set(member.user.user_id, member.user.username);
+            }
+
+            const playerCorrectAnswers = new Map<number, number>();
+            for (const userId of participantsMap.keys()) {
+                playerCorrectAnswers.set(userId, 0);
+            }
+
+            const winnerByRound = new Map<number, number>();
+            for (const round of rounds) {
+                const firstVotes = ratingByImage.get(round.first_image) ?? 0;
+                const secondVotes = ratingByImage.get(round.second_image) ?? 0;
+                const winnerImageId = firstVotes >= secondVotes ? round.first_image : round.second_image;
+                winnerByRound.set(round.round_id, winnerImageId);
+            }
+
+            for (const vote of votes) {
+                const winnerImageId = winnerByRound.get(vote.round_id);
+                if (winnerImageId && vote.voted_image_id === winnerImageId) {
+                    playerCorrectAnswers.set(vote.user_id, (playerCorrectAnswers.get(vote.user_id) ?? 0) + 1);
+                }
+            }
+
+            const player_stats = Array.from(participantsMap.entries())
+                .map(([user_id, username]) => ({
+                    user_id,
+                    username,
+                    correct_answers: playerCorrectAnswers.get(user_id) ?? 0,
+                }))
+                .sort((a, b) => b.correct_answers - a.correct_answers || a.user_id - b.user_id);
+
             return reply.status(200).send({
                 game: {
                     game_id: game.public_id,
@@ -109,6 +185,7 @@ export default async function getResult(app: FastifyInstance) {
                         description: game.criteria.description,
                     },
                     total_votes: votes.length,
+                    player_stats,
                     winners,
                     results,
                 },

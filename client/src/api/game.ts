@@ -72,9 +72,13 @@ export type StartGameResponse = {
 
 export type GetRoundResponse = {
     round: {
-        round_id: number;
+        current_round: number;
         first_image: number;
         second_image: number;
+        first_image_url: string;
+        second_image_url: string;
+        first_image_votes: number;
+        second_image_votes: null;
     };
 };
 
@@ -90,12 +94,14 @@ export type VoteRoundResponse = {
         current_round?: number;
     };
     round?: {
-        round_id: number;
+        current_round: number;
         votes_received?: number;
         votes_required?: number;
         winner_image_id?: number;
         first_image_votes?: number;
         second_image_votes?: number;
+        unknown_image_id?: number;
+        unknown_image_votes?: number;
     };
 };
 
@@ -111,6 +117,11 @@ export type GameResultResponse = {
             description: string;
         };
         total_votes: number;
+        player_stats: Array<{
+            user_id: number;
+            username: string;
+            correct_answers: number;
+        }>;
         winners: Array<{
             image_id: number;
             url: string;

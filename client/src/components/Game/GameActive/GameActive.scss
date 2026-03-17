@@ -1,0 +1,81 @@
+.game-active {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .message {
+        margin-bottom: 12px;
+    }
+
+    .error {
+        color: var(--color-danger);
+    }
+
+    .round-counter {
+        background-color: #f7f5fd;
+        color: #6450a0;
+        width: fit-content;
+        padding: 4px 12px;
+        border-radius: 16px;
+        margin: 0 auto;
+        font-weight: 500;
+    }
+
+    .images-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .image-card {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        cursor: pointer;
+        overflow: hidden;
+
+        img {
+            width: 100%;
+            height: 260px;
+            object-fit: cover;
+            border-radius: 16px;
+            border: 5px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        &.is-selected img {
+            border-color: var(--color-primary);
+        }
+
+        &.is-winner {
+            animation: winner-pop 1.5s ease;
+        }
+
+        .votes {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+    }
+}
+
+@keyframes winner-pop {
+    0% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(1.06);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 768px) {
+    .game-active {
+        .images-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+}

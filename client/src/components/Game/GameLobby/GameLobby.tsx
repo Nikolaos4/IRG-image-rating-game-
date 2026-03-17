@@ -1,13 +1,23 @@
 import Button from "@/components/ui/Button/Button";
 import "./GameLobby.scss";
-import type { GetGameResponse } from "@/api/game";
+import { startGameRequest, type GetGameResponse } from "@/api/game";
 import GameMember from "../GameMember/GameMember";
 
 interface Props {
     game: GetGameResponse["game"];
+    onStatusUpdated: (status: string) => void;
 }
 
-export default function GameLobby({ game }: Props) {
+export default function GameLobby({ game, onStatusUpdated }: Props) {
+    async function startGame() {
+        try {
+            const response = await startGameRequest(game.game_id);
+            onStatusUpdated(response.game.status);
+        } catch (error) {
+            console.error("Error starting game:", error);
+        }
+    }
+
     return (
         <div className="game-lobby">
             <Button>Скопировать ссылку</Button>
@@ -27,7 +37,7 @@ export default function GameLobby({ game }: Props) {
                     />
                 ))}
             </div>
-            <Button>Начать</Button>
+            <Button onClick={startGame}>Начать</Button>
         </div>
     );
 }

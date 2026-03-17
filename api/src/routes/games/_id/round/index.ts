@@ -29,28 +29,62 @@ export default async function getRound(app: FastifyInstance) {
         async (request: FastifyRequest, reply: FastifyReply) => {
             const { id } = request.params as z.infer<typeof GetGameParams>;
 
-            const data = await prisma.round
-                .findFirstOrThrow({
-                    where: {
-                        game: {
-                            public_id: id,
+            const data = await prisma.round.findFirst({
+                where: {
+                    game: {
+                        public_id: id,
+                    },
+                },
+                orderBy: {
+                    round_id: "desc",
+                },
+                include: {
+                    game: {
+                        select: {
+                            criteria_id: true,
+                            current_round: true,
                         },
                     },
-                    orderBy: {
-                        round_id: "desc",
+                    firstImage: {
+                        select: {
+                            url: true,
+                        },
                     },
-                })
-                .catch(() => {
-                    return reply.status(404).send({
-                        message: "Round not found",
-                    });
+                    secondImage: {
+                        select: {
+                            url: true,
+                        },
+                    },
+                },
+            });
+
+            if (!data) {
+                return reply.status(404).send({
+                    message: "Round not found",
                 });
+            }
+
+            const knownImageRating = await prisma.imageRating.findUnique({
+                where: {
+                    image_id_criteria_id: {
+                        image_id: data.first_image,
+                        criteria_id: data.game.criteria_id,
+                    },
+                },
+                select: {
+                    votes: true,
+                },
+            });
 
             return reply.status(200).send({
                 round: {
-                    round_id: data.round_id,
+                    current_round: data.game.current_round,
                     first_image: data.first_image,
                     second_image: data.second_image,
+                    first_image_url: data.firstImage.url,
+                    second_image_url: data.secondImage.url,
+                    first_image_votes: knownImageRating?.votes ?? 0,
+                    second_image_votes: null,
                 },
             });
         },
@@ -92,7 +126,7 @@ export default async function getRound(app: FastifyInstance) {
                     };
                 }
 
-                await tx.$queryRaw`SELECT pg_advisory_xact_lock(${gameRef.game_id})`;
+                await tx.$executeRaw`SELECT pg_advisory_xact_lock(${gameRef.game_id})`;
 
                 const game = await tx.game.findUnique({
                     where: {
@@ -103,6 +137,7 @@ export default async function getRound(app: FastifyInstance) {
                         public_id: true,
                         status: true,
                         current_round: true,
+                        max_rounds: true,
                         criteria_id: true,
                     },
                 });
@@ -235,7 +270,7 @@ export default async function getRound(app: FastifyInstance) {
                         payload: {
                             message: "Vote accepted. Waiting for other players",
                             round: {
-                                round_id: round.round_id,
+                                current_round: game.current_round,
                                 votes_received: roundVotesCount,
                                 votes_required: membersCount,
                             },
@@ -280,11 +315,17 @@ export default async function getRound(app: FastifyInstance) {
                     },
                 });
 
-                const maxDuelRounds = Math.max(gameImages.length - 1, 0);
-                const isFinalRound = game.current_round >= maxDuelRounds;
-                const nextImage = gameImages[game.current_round + 1]?.image_id;
+                const maxRoundsBySettings = Math.max(game.max_rounds ?? 1, 1);
+                const maxRoundsByImages = Math.floor(gameImages.length / 2);
+                const totalRounds = Math.min(maxRoundsBySettings, maxRoundsByImages);
+                const isFinalRound = game.current_round >= totalRounds;
 
-                if (isFinalRound || !nextImage) {
+                const nextRoundNumber = game.current_round + 1;
+                const nextPairStartIndex = (nextRoundNumber - 1) * 2;
+                const nextFirstImage = gameImages[nextPairStartIndex]?.image_id;
+                const nextSecondImage = gameImages[nextPairStartIndex + 1]?.image_id;
+
+                if (isFinalRound || !nextFirstImage || !nextSecondImage) {
                     const loserImageId = winnerImageId === round.first_image ? round.second_image : round.first_image;
 
                     const winnerVoters = await tx.vote.findMany({
@@ -367,10 +408,12 @@ export default async function getRound(app: FastifyInstance) {
                                 status: finishedGame.status,
                             },
                             round: {
-                                round_id: round.round_id,
+                                current_round: game.current_round,
                                 winner_image_id: winnerImageId,
                                 first_image_votes: firstImageVotes,
                                 second_image_votes: secondImageVotes,
+                                unknown_image_id: round.second_image,
+                                unknown_image_votes: secondImageVotes,
                             },
                         },
                     };
@@ -386,8 +429,8 @@ export default async function getRound(app: FastifyInstance) {
                         },
                         rounds: {
                             create: {
-                                first_image: winnerImageId,
-                                second_image: nextImage,
+                                first_image: nextFirstImage,
+                                second_image: nextSecondImage,
                             },
                         },
                     },
@@ -407,10 +450,12 @@ export default async function getRound(app: FastifyInstance) {
                             current_round: updatedGame.current_round,
                         },
                         round: {
-                            round_id: round.round_id,
+                            current_round: updatedGame.current_round,
                             winner_image_id: winnerImageId,
                             first_image_votes: firstImageVotes,
                             second_image_votes: secondImageVotes,
+                            unknown_image_id: round.second_image,
+                            unknown_image_votes: secondImageVotes,
                         },
                     },
                 };

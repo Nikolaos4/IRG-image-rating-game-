@@ -24,24 +24,34 @@ export default async function startGame(app: FastifyInstance) {
         async (request: FastifyRequest, reply: FastifyReply) => {
             const { id } = request.params as z.infer<typeof GetGameParams>;
 
-            await prisma.game
-                .findFirstOrThrow({
-                    where: {
-                        public_id: id,
-                        status: "lobby",
-                    },
-                })
-                .catch(() => {
-                    return reply.status(404).send({
-                        message: "Game not found or already started",
-                    });
+            const game = await prisma.game.findFirst({
+                where: {
+                    public_id: id,
+                    status: "lobby",
+                },
+                select: {
+                    max_rounds: true,
+                },
+            });
+
+            if (!game) {
+                return reply.status(404).send({
+                    message: "Game not found or already started",
                 });
+            }
+
+            const roundsLimit = Math.max(game.max_rounds ?? 1, 1);
+            const imagesLimit = roundsLimit * 2;
 
             const images = await prisma.$queryRaw<Image[]>`
-                SELECT * FROM image ORDER BY RANDOM() LIMIT (
-                    SELECT max_rounds FROM game WHERE public_id = ${id}
-                )
+                SELECT * FROM image ORDER BY RANDOM() LIMIT ${imagesLimit}
             `;
+
+            if (images.length < imagesLimit) {
+                return reply.status(409).send({
+                    message: "Not enough images to start game with configured rounds",
+                });
+            }
 
             const data = await prisma.game.update({
                 where: {
