@@ -3,6 +3,7 @@ import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { prisma } from "@/lib/prisma.js";
 import { publishRoundUpdate } from "@/lib/game-round-realtime.js";
+import { publishGameUpdate } from "@/lib/game-realtime.js";
 
 import { GetGameParams } from "../index.js";
 import { authenticate } from "@/lib/authenticate.js";
@@ -78,6 +79,7 @@ export default async function startGame(app: FastifyInstance) {
             });
 
             await publishRoundUpdate(data.public_id);
+            await publishGameUpdate(data.public_id);
 
             return reply.status(200).send({
                 message: "Game started successfully",

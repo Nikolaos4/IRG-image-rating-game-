@@ -1,8 +1,15 @@
-import { getRoundRequest, voteRoundRequest, type GetGameResponse, type GetRoundResponse } from "@/api/game";
-import { useEffect, useState } from "react";
+import {
+    getRoundRequest,
+    getRoundWsUrl,
+    voteRoundRequest,
+    type GetGameResponse,
+    type GetRoundResponse,
+} from "@/api/game";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./GameActive.scss";
 
 const ROUND_REVEAL_DELAY_MS = 3000;
+const TOKEN_STORAGE_KEY = "compairy_jwt";
 
 interface Props {
     game: GetGameResponse["game"];
@@ -18,24 +25,34 @@ export default function GameActive({ game, onGameUpdated }: Props) {
     const [revealedUnknownVotes, setRevealedUnknownVotes] = useState<number | null>(null);
     const [selectedImageId, setSelectedImageId] = useState<number | null>(null);
     const [winnerImageId, setWinnerImageId] = useState<number | null>(null);
+    const latestRoundRef = useRef<GetRoundResponse["round"] | null>(null);
+    const onGameUpdatedRef = useRef<Props["onGameUpdated"]>(onGameUpdated);
+    const blockRealtimeUpdatesRef = useRef(false);
 
-    const loadRound = async () => {
+    useEffect(() => {
+        onGameUpdatedRef.current = onGameUpdated;
+    }, [onGameUpdated]);
+
+    const loadRound = useCallback(async () => {
         try {
             setIsLoading(true);
             setError(null);
             const response = await getRoundRequest(game.game_id);
-            const isRoundChanged = Boolean(round && round.current_round !== response.round.current_round);
+            const isRoundChanged = Boolean(
+                latestRoundRef.current && latestRoundRef.current.current_round !== response.round.current_round,
+            );
             setRevealedUnknownVotes((prev) => (isRoundChanged ? null : prev));
             setSelectedImageId((prev) => (isRoundChanged ? null : prev));
             setWinnerImageId((prev) => (isRoundChanged ? null : prev));
             setRound(response.round);
+            latestRoundRef.current = response.round;
         } catch (err) {
             const text = err instanceof Error ? err.message : "Не удалось загрузить текущий раунд";
             setError(text);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [game.game_id]);
 
     const handleVote = async (imageId: number) => {
         if (isVoting) return;
@@ -44,26 +61,10 @@ export default function GameActive({ game, onGameUpdated }: Props) {
             setError(null);
             setMessage(null);
             setSelectedImageId(imageId);
-            setWinnerImageId(null);
 
-            const response = await voteRoundRequest(game.game_id, { voted_image_id: imageId });
-            const winnerId = response.round?.winner_image_id;
-            const isRoundCompleted = typeof winnerId === "number";
+            await voteRoundRequest(game.game_id, { voted_image_id: imageId });
 
-            if (isRoundCompleted) {
-                setWinnerImageId(winnerId);
-            }
-
-            if (typeof response.round?.unknown_image_votes === "number") {
-                setRevealedUnknownVotes(response.round.unknown_image_votes);
-            } else {
-                setMessage(response.message);
-            }
-
-            await new Promise((resolve) => setTimeout(resolve, ROUND_REVEAL_DELAY_MS));
-
-            await loadRound();
-            await onGameUpdated?.();
+            await onGameUpdatedRef.current?.();
         } catch (err) {
             const text = err instanceof Error ? err.message : "Не удалось отправить голос";
             setError(text);
@@ -74,7 +75,90 @@ export default function GameActive({ game, onGameUpdated }: Props) {
 
     useEffect(() => {
         void loadRound();
-    }, [game.game_id]);
+    }, [loadRound]);
+
+    useEffect(() => {
+        const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+        if (!token) {
+            return;
+        }
+
+        let isMounted = true;
+        const ws = new WebSocket(getRoundWsUrl(game.game_id, token));
+
+        ws.onmessage = async (event) => {
+            if (!isMounted) {
+                return;
+            }
+
+            try {
+                const payload = JSON.parse(event.data as string) as {
+                    type?: string;
+                    status?: string;
+                    current_round?: number;
+                    completedRound?: {
+                        current_round: number;
+                        first_image: number;
+                        second_image: number;
+                        first_image_url: string;
+                        second_image_url: string;
+                        winner_image_id: number;
+                        first_image_votes: number;
+                        second_image_votes: number;
+                    };
+                    round?: {
+                        current_round: number;
+                        first_image: number;
+                        second_image: number;
+                        first_image_url: string;
+                        second_image_url: string;
+                        first_image_votes: number;
+                        second_image_votes: null;
+                    };
+                };
+
+                if (payload.type === "round:current") {
+                    if (payload.completedRound) {
+                        blockRealtimeUpdatesRef.current = true;
+
+                        setWinnerImageId(payload.completedRound.winner_image_id);
+                        setRevealedUnknownVotes(payload.completedRound.second_image_votes);
+
+                        await new Promise((resolve) => setTimeout(resolve, ROUND_REVEAL_DELAY_MS));
+
+                        blockRealtimeUpdatesRef.current = false;
+
+                        if (payload.round) {
+                            setRound(payload.round);
+                            latestRoundRef.current = payload.round;
+                            setRevealedUnknownVotes(null);
+                            setSelectedImageId(null);
+                            setWinnerImageId(null);
+                        }
+                    } else if (payload.round && !blockRealtimeUpdatesRef.current) {
+                        void loadRound();
+                    }
+
+                    void onGameUpdatedRef.current?.();
+                }
+            } catch {
+                // Ignore malformed websocket payloads.
+            }
+        };
+
+        ws.onerror = () => {
+            if (!isMounted) {
+                return;
+            }
+
+            setError((prev) => prev ?? "Проблема с realtime-соединением");
+        };
+
+        return () => {
+            isMounted = false;
+            ws.close();
+        };
+    }, [game.game_id, loadRound]);
 
     if (isLoading) {
         return <div className="game-active">Загрузка раунда...</div>;

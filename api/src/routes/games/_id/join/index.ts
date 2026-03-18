@@ -3,6 +3,7 @@ import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { prisma } from "@/lib/prisma.js";
 import { authenticate } from "@/lib/authenticate.js";
+import { publishGameUpdate } from "@/lib/game-realtime.js";
 
 export const JoinGameParams = z.object({
     id: z.uuid().meta({ example: "123e4567-e89b-12d3-a456-426614174000", description: "The id of the game" }),
@@ -83,6 +84,7 @@ export default async function joinGame(app: FastifyInstance) {
 
                 return {
                     statusCode: 201,
+                    publishGameId: game.public_id,
                     payload: {
                         message: "User joined game successfully",
                         game: {
@@ -92,6 +94,10 @@ export default async function joinGame(app: FastifyInstance) {
                     },
                 };
             });
+
+            if (joinResult.publishGameId) {
+                await publishGameUpdate(joinResult.publishGameId);
+            }
 
             return reply.status(joinResult.statusCode).send(joinResult.payload);
         },

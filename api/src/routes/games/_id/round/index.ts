@@ -186,6 +186,18 @@ export default async function getRound(app: FastifyInstance) {
                     orderBy: {
                         round_id: "desc",
                     },
+                    include: {
+                        firstImage: {
+                            select: {
+                                url: true,
+                            },
+                        },
+                        secondImage: {
+                            select: {
+                                url: true,
+                            },
+                        },
+                    },
                 });
 
                 if (!round) {
@@ -437,32 +449,87 @@ export default async function getRound(app: FastifyInstance) {
                     select: {
                         public_id: true,
                         current_round: true,
+                        criteria_id: true,
+                    },
+                });
+
+                const nextRoundData = await tx.round.findFirst({
+                    where: {
+                        game_id: game.game_id,
+                    },
+                    orderBy: {
+                        round_id: "desc",
+                    },
+                    include: {
+                        firstImage: {
+                            select: {
+                                url: true,
+                            },
+                        },
+                        secondImage: {
+                            select: {
+                                url: true,
+                            },
+                        },
+                    },
+                });
+
+                const nextRoundFirstImageRating = await tx.imageRating.findUnique({
+                    where: {
+                        image_id_criteria_id: {
+                            image_id: nextFirstImage,
+                            criteria_id: updatedGame.criteria_id,
+                        },
+                    },
+                    select: {
+                        votes: true,
                     },
                 });
 
                 return {
                     statusCode: 200,
                     publishGameId: updatedGame.public_id,
+                    completedRoundData: {
+                        current_round: game.current_round,
+                        first_image: round.first_image,
+                        second_image: round.second_image,
+                        first_image_url: round.firstImage.url,
+                        second_image_url: round.secondImage.url,
+                        winner_image_id: winnerImageId,
+                        first_image_votes: firstImageVotes,
+                        second_image_votes: secondImageVotes,
+                    },
                     payload: {
                         message: "Vote accepted. Next round started",
                         game: {
                             game_id: updatedGame.public_id,
                             current_round: updatedGame.current_round,
                         },
-                        round: {
-                            current_round: updatedGame.current_round,
+                        completedRound: {
+                            current_round: game.current_round,
+                            first_image: round.first_image,
+                            second_image: round.second_image,
+                            first_image_url: round.firstImage.url,
+                            second_image_url: round.secondImage.url,
                             winner_image_id: winnerImageId,
                             first_image_votes: firstImageVotes,
                             second_image_votes: secondImageVotes,
-                            unknown_image_id: round.second_image,
-                            unknown_image_votes: secondImageVotes,
+                        },
+                        round: {
+                            current_round: updatedGame.current_round,
+                            first_image: nextFirstImage,
+                            second_image: nextSecondImage,
+                            first_image_url: nextRoundData?.firstImage.url ?? "",
+                            second_image_url: nextRoundData?.secondImage.url ?? "",
+                            first_image_votes: nextRoundFirstImageRating?.votes ?? 0,
+                            second_image_votes: null,
                         },
                     },
                 };
             });
 
             if (voteResult.publishGameId) {
-                await publishRoundUpdate(voteResult.publishGameId);
+                await publishRoundUpdate(voteResult.publishGameId, voteResult.completedRoundData);
             }
 
             return reply.status(voteResult.statusCode).send(voteResult.payload);

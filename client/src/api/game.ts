@@ -93,15 +93,26 @@ export type VoteRoundResponse = {
         status?: string;
         current_round?: number;
     };
+    completedRound?: {
+        current_round: number;
+        first_image: number;
+        second_image: number;
+        first_image_url: string;
+        second_image_url: string;
+        winner_image_id: number;
+        first_image_votes: number;
+        second_image_votes: number;
+    };
     round?: {
         current_round: number;
+        first_image: number;
+        second_image: number;
+        first_image_url: string;
+        second_image_url: string;
+        first_image_votes: number;
+        second_image_votes: null;
         votes_received?: number;
         votes_required?: number;
-        winner_image_id?: number;
-        first_image_votes?: number;
-        second_image_votes?: number;
-        unknown_image_id?: number;
-        unknown_image_votes?: number;
     };
 };
 
@@ -187,4 +198,16 @@ export function getRoundWsUrl(gameId: string, token?: string) {
 
     const params = new URLSearchParams({ token });
     return `${wsBaseUrl}/games/${gameId}/round/ws?${params.toString()}`;
+}
+
+export function getGameWsUrl(gameId: string, token?: string) {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api";
+    const wsBaseUrl = apiBaseUrl.replace(/^http/, "ws").replace(/\/$/, "");
+
+    if (!token) {
+        return `${wsBaseUrl}/games/${gameId}/ws`;
+    }
+
+    const params = new URLSearchParams({ token });
+    return `${wsBaseUrl}/games/${gameId}/ws?${params.toString()}`;
 }

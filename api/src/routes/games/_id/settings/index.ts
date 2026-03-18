@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma.js";
 
 import { GetGameParams } from "../index.js";
 import { authenticate } from "@/lib/authenticate.js";
+import { publishGameUpdate } from "@/lib/game-realtime.js";
 
 export const EditGameRequestBody = z
     .object({
@@ -40,18 +41,23 @@ export default async function editGame(app: FastifyInstance) {
         async (request: FastifyRequest, reply: FastifyReply) => {
             const { id } = request.params as z.infer<typeof GetGameParams>;
 
-            await prisma.game
-                .findFirstOrThrow({
+            const game = await prisma.game
+                .findUnique({
                     where: {
                         public_id: id,
-                        status: "lobby",
+                    },
+                    select: {
+                        public_id: true,
+                        status: true,
                     },
                 })
-                .catch(() => {
-                    return reply.status(404).send({
-                        message: "Game not found or already started",
-                    });
+                .catch(() => null);
+
+            if (!game || game.status !== "lobby") {
+                return reply.status(404).send({
+                    message: "Game not found or already started",
                 });
+            }
 
             const { max_rounds, max_players } = request.body as z.infer<typeof EditGameRequestBody>;
 
@@ -64,6 +70,8 @@ export default async function editGame(app: FastifyInstance) {
                     max_players: max_players,
                 },
             });
+
+            await publishGameUpdate(data.public_id);
 
             return reply.status(200).send({
                 message: "Game settings updated successfully",
