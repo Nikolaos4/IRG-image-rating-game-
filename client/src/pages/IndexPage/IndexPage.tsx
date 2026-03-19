@@ -12,7 +12,9 @@ export default function HomePage() {
                     Кого выберешь ты? Мы показали 100 людям две фотографии и спросили:{" "}
                     <span className="highlight">Кто тупее?</span> <br></br>А теперь угадай, кого выбрало большинство.
                 </p>
-                <Button>Играть</Button>
+                <Link to="/themes">
+                    <Button>Играть</Button>
+                </Link>
             </section>
         </main>
     );
