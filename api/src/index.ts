@@ -52,6 +52,7 @@ app.register(swagger, {
             { name: "game", description: "game" },
             { name: "theme", description: "theme" },
             { name: "rating", description: "rating" },
+            { name: "admin", description: "admin" },
         ],
         components: {
             securitySchemes: {

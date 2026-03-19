@@ -8,6 +8,7 @@ import Header from "./components/Header/Header";
 import ThemesPage from "./pages/ThemesPage/ThemesPage";
 import GamePage from "./pages/GamePage/GamePage";
 import RatingPage from "./pages/RatingPage/RatingPage";
+import AdminPage from "./pages/AdminPage/AdminPage";
 import { useAuth } from "./contexts/AuthContext";
 
 function GuestOnlyRoute({ children }: { children: ReactNode }) {
@@ -37,6 +38,25 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
     }
 
     if (!isAuthenticated) {
+        return (
+            <Navigate
+                to="/"
+                replace
+            />
+        );
+    }
+
+    return children;
+}
+
+function AdminOnlyRoute({ children }: { children: ReactNode }) {
+    const { isAuthenticated, isLoading, user } = useAuth();
+
+    if (isLoading) {
+        return null;
+    }
+
+    if (!isAuthenticated || user?.role !== "admin") {
         return (
             <Navigate
                 to="/"
@@ -79,6 +99,14 @@ function App() {
                         <ProtectedRoute>
                             <RatingPage />
                         </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin"
+                    element={
+                        <AdminOnlyRoute>
+                            <AdminPage />
+                        </AdminOnlyRoute>
                     }
                 />
                 <Route
