@@ -76,6 +76,19 @@ export default async function getRound(app: FastifyInstance) {
                 },
             });
 
+            const [votesReceived, votesRequired] = await Promise.all([
+                prisma.vote.count({
+                    where: {
+                        round_id: data.round_id,
+                    },
+                }),
+                prisma.gameMember.count({
+                    where: {
+                        game_id: data.game_id,
+                    },
+                }),
+            ]);
+
             return reply.status(200).send({
                 round: {
                     current_round: data.game.current_round,
@@ -85,6 +98,8 @@ export default async function getRound(app: FastifyInstance) {
                     second_image_url: data.secondImage.url,
                     first_image_votes: knownImageRating?.votes ?? 0,
                     second_image_votes: null,
+                    votes_received: votesReceived,
+                    votes_required: votesRequired,
                 },
             });
         },
@@ -279,6 +294,7 @@ export default async function getRound(app: FastifyInstance) {
                 if (roundVotesCount < membersCount) {
                     return {
                         statusCode: 200,
+                        publishGameId: game.public_id,
                         payload: {
                             message: "Vote accepted. Waiting for other players",
                             round: {
@@ -498,6 +514,8 @@ export default async function getRound(app: FastifyInstance) {
                         winner_image_id: winnerImageId,
                         first_image_votes: firstImageVotes,
                         second_image_votes: secondImageVotes,
+                        votes_received: roundVotesCount,
+                        votes_required: membersCount,
                     },
                     payload: {
                         message: "Vote accepted. Next round started",
@@ -514,6 +532,8 @@ export default async function getRound(app: FastifyInstance) {
                             winner_image_id: winnerImageId,
                             first_image_votes: firstImageVotes,
                             second_image_votes: secondImageVotes,
+                            votes_received: roundVotesCount,
+                            votes_required: membersCount,
                         },
                         round: {
                             current_round: updatedGame.current_round,

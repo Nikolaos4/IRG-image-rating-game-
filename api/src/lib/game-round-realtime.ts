@@ -14,6 +14,8 @@ type RoundStateMessage = {
         second_image_url: string;
         first_image_votes: number;
         second_image_votes: null;
+        votes_received: number;
+        votes_required: number;
     } | null;
     completedRound?: {
         current_round: number;
@@ -24,6 +26,8 @@ type RoundStateMessage = {
         winner_image_id: number;
         first_image_votes: number;
         second_image_votes: number;
+        votes_received: number;
+        votes_required: number;
     };
     at: string;
 };
@@ -101,17 +105,29 @@ export async function createRoundStateMessage(
     let round = null;
 
     if (currentRound && game.status === "active") {
-        const firstImageRating = await prisma.imageRating.findUnique({
-            where: {
-                image_id_criteria_id: {
-                    image_id: currentRound.first_image,
-                    criteria_id: game.criteria_id,
+        const [firstImageRating, votesReceived, votesRequired] = await Promise.all([
+            prisma.imageRating.findUnique({
+                where: {
+                    image_id_criteria_id: {
+                        image_id: currentRound.first_image,
+                        criteria_id: game.criteria_id,
+                    },
                 },
-            },
-            select: {
-                votes: true,
-            },
-        });
+                select: {
+                    votes: true,
+                },
+            }),
+            prisma.vote.count({
+                where: {
+                    round_id: currentRound.round_id,
+                },
+            }),
+            prisma.gameMember.count({
+                where: {
+                    game_id: currentRound.game_id,
+                },
+            }),
+        ]);
 
         round = {
             current_round: game.current_round,
@@ -121,6 +137,8 @@ export async function createRoundStateMessage(
             second_image_url: currentRound.secondImage.url,
             first_image_votes: firstImageRating?.votes ?? 0,
             second_image_votes: null,
+            votes_received: votesReceived,
+            votes_required: votesRequired,
         };
     }
 

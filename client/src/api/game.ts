@@ -79,6 +79,8 @@ export type GetRoundResponse = {
         second_image_url: string;
         first_image_votes: number;
         second_image_votes: null;
+        votes_received: number;
+        votes_required: number;
     };
 };
 
@@ -102,6 +104,8 @@ export type VoteRoundResponse = {
         winner_image_id: number;
         first_image_votes: number;
         second_image_votes: number;
+        votes_received: number;
+        votes_required: number;
     };
     round?: {
         current_round: number;
@@ -111,8 +115,8 @@ export type VoteRoundResponse = {
         second_image_url: string;
         first_image_votes: number;
         second_image_votes: null;
-        votes_received?: number;
-        votes_required?: number;
+        votes_received: number;
+        votes_required: number;
     };
 };
 

@@ -64,6 +64,16 @@ export default function GameActive({ game, onGameUpdated }: Props) {
 
             await voteRoundRequest(game.game_id, { voted_image_id: imageId });
 
+            setRound((prev) => {
+                if (!prev) {
+                    return prev;
+                }
+
+                return {
+                    ...prev,
+                    votes_received: Math.min(prev.votes_received + 1, prev.votes_required),
+                };
+            });
             await onGameUpdatedRef.current?.();
         } catch (err) {
             const text = err instanceof Error ? err.message : "Не удалось отправить голос";
@@ -105,6 +115,8 @@ export default function GameActive({ game, onGameUpdated }: Props) {
                         winner_image_id: number;
                         first_image_votes: number;
                         second_image_votes: number;
+                        votes_received: number;
+                        votes_required: number;
                     };
                     round?: {
                         current_round: number;
@@ -114,6 +126,8 @@ export default function GameActive({ game, onGameUpdated }: Props) {
                         second_image_url: string;
                         first_image_votes: number;
                         second_image_votes: null;
+                        votes_received: number;
+                        votes_required: number;
                     };
                 };
 
@@ -123,6 +137,17 @@ export default function GameActive({ game, onGameUpdated }: Props) {
 
                         setWinnerImageId(payload.completedRound.winner_image_id);
                         setRevealedUnknownVotes(payload.completedRound.second_image_votes);
+                        setRound((prev) => {
+                            if (!prev || prev.current_round !== payload.completedRound?.current_round) {
+                                return prev;
+                            }
+
+                            return {
+                                ...prev,
+                                votes_received: payload.completedRound.votes_received,
+                                votes_required: payload.completedRound.votes_required,
+                            };
+                        });
 
                         await new Promise((resolve) => setTimeout(resolve, ROUND_REVEAL_DELAY_MS));
 
@@ -208,6 +233,10 @@ export default function GameActive({ game, onGameUpdated }: Props) {
                     />
                     <div className="votes">{revealedUnknownVotes !== null ? revealedUnknownVotes : "?"}</div>
                 </div>
+            </div>
+
+            <div className="round-voters-counter">
+                {round.votes_received}/{round.votes_required} проголосовало
             </div>
         </section>
     );
