@@ -1,0 +1,47 @@
+.rating-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .rating-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--color-border-colored);
+        border-radius: 16px;
+        padding: 24px;
+    }
+
+    .rating-table {
+        width: 100%;
+        border-collapse: collapse;
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px 14px;
+
+            &.user {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+
+                .avatar {
+                    height: 50px;
+                    width: 50px;
+                    border-radius: 50%;
+                    background-color: var(--color-primary);
+                }
+            }
+
+            &.position {
+                font-weight: 800;
+                font-size: 1.25rem;
+                color: var(--color-primary);
+                width: fit-content;
+            }
+        }
+
+        th {
+            font-weight: 600;
+        }
+    }
+}

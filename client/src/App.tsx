@@ -7,6 +7,7 @@ import RegisterPage from "./pages/RegisterPage";
 import Header from "./components/Header/Header";
 import ThemesPage from "./pages/ThemesPage/ThemesPage";
 import GamePage from "./pages/GamePage/GamePage";
+import RatingPage from "./pages/RatingPage/RatingPage";
 import { useAuth } from "./contexts/AuthContext";
 
 function GuestOnlyRoute({ children }: { children: ReactNode }) {
@@ -69,6 +70,14 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <GamePage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/rating"
+                    element={
+                        <ProtectedRoute>
+                            <RatingPage />
                         </ProtectedRoute>
                     }
                 />
