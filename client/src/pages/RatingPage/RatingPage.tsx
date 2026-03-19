@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { getRatingRequest, type RatingItem } from "@/api/rating";
 import "@/assets/scss/pages.scss";
 import "./RatingPage.scss";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RatingPage() {
     const [rating, setRating] = useState<RatingItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchRating = async () => {
@@ -50,7 +52,9 @@ export default function RatingPage() {
                     </thead>
                     <tbody>
                         {rating.map((item) => (
-                            <tr key={item.user_id}>
+                            <tr
+                                key={item.user_id}
+                                className={user?.user_id === item.user_id ? "current-user" : ""}>
                                 <td className="position">{item.position}</td>
                                 <td className="user">
                                     <div className="avatar"></div>
