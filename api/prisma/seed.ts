@@ -1,4 +1,5 @@
 import { prisma } from "../src/lib/prisma.js";
+import bcrypt from "bcrypt";
 
 async function main() {
     // создаем роли
@@ -51,6 +52,41 @@ async function main() {
             { image_id: 10, criteria_id: 1, votes: 1 },
         ],
         skipDuplicates: true,
+    });
+
+    // создаем тестового администратора
+    const adminPasswordHash = await bcrypt.hash("admin123", 10);
+
+    const adminUser = await prisma.user.upsert({
+        where: {
+            email: "admin@compairy.test",
+        },
+        update: {
+            username: "admin",
+            password: adminPasswordHash,
+            role_id: 2,
+        },
+        create: {
+            username: "admin",
+            email: "admin@compairy.test",
+            password: adminPasswordHash,
+            role_id: 2,
+        },
+    });
+
+    await prisma.userRating.upsert({
+        where: {
+            user_id: adminUser.user_id,
+        },
+        update: {
+            wins: 0,
+            losses: 0,
+        },
+        create: {
+            user_id: adminUser.user_id,
+            wins: 0,
+            losses: 0,
+        },
     });
 
     console.log("Database seeded successfully");
