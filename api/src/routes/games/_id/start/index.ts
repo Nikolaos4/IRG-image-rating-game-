@@ -7,7 +7,6 @@ import { publishGameUpdate } from "@/lib/game-realtime.js";
 
 import { GetGameParams } from "../index.js";
 import { authenticate } from "@/lib/authenticate.js";
-import { Image } from "@/generated/prisma/client.js";
 
 export default async function startGame(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().post(
@@ -32,6 +31,7 @@ export default async function startGame(app: FastifyInstance) {
                 },
                 select: {
                     max_rounds: true,
+                    criteria_id: true,
                 },
             });
 
@@ -44,13 +44,18 @@ export default async function startGame(app: FastifyInstance) {
             const roundsLimit = Math.max(game.max_rounds ?? 1, 1);
             const imagesLimit = roundsLimit * 2;
 
-            const images = await prisma.$queryRaw<Image[]>`
-                SELECT * FROM image ORDER BY RANDOM() LIMIT ${imagesLimit}
+            const images = await prisma.$queryRaw<{ image_id: number }[]>`
+                SELECT i.image_id
+                FROM image i
+                JOIN image_rating ir ON ir.image_id = i.image_id
+                WHERE ir.criteria_id = ${game.criteria_id}
+                ORDER BY RANDOM()
+                LIMIT ${imagesLimit}
             `;
 
             if (images.length < imagesLimit) {
                 return reply.status(409).send({
-                    message: "Not enough images to start game with configured rounds",
+                    message: "Not enough images for selected criteria to start game with configured rounds",
                 });
             }
 

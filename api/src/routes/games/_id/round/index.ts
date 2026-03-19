@@ -260,24 +260,26 @@ export default async function getRound(app: FastifyInstance) {
                     },
                 });
 
-                await tx.imageRating.upsert({
+                const ratingUpdate = await tx.imageRating.updateMany({
                     where: {
-                        image_id_criteria_id: {
-                            image_id: voted_image_id,
-                            criteria_id: game.criteria_id,
-                        },
+                        image_id: voted_image_id,
+                        criteria_id: game.criteria_id,
                     },
-                    update: {
+                    data: {
                         votes: {
                             increment: 1,
                         },
                     },
-                    create: {
-                        image_id: voted_image_id,
-                        criteria_id: game.criteria_id,
-                        votes: 1,
-                    },
                 });
+
+                if (ratingUpdate.count === 0) {
+                    return {
+                        statusCode: 409,
+                        payload: {
+                            message: "Selected image is not configured for this criteria",
+                        },
+                    };
+                }
 
                 const membersCount = await tx.gameMember.count({
                     where: {
