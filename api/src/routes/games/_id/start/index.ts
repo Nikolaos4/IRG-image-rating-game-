@@ -3,10 +3,10 @@ import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { prisma } from "@/lib/prisma.js";
 import { publishRoundUpdate } from "@/lib/game-round-realtime.js";
+import { publishGameUpdate } from "@/lib/game-realtime.js";
 
 import { GetGameParams } from "../index.js";
 import { authenticate } from "@/lib/authenticate.js";
-import { Image } from "@/generated/prisma/client.js";
 
 export default async function startGame(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().post(
@@ -24,24 +24,40 @@ export default async function startGame(app: FastifyInstance) {
         async (request: FastifyRequest, reply: FastifyReply) => {
             const { id } = request.params as z.infer<typeof GetGameParams>;
 
-            await prisma.game
-                .findFirstOrThrow({
-                    where: {
-                        public_id: id,
-                        status: "lobby",
-                    },
-                })
-                .catch(() => {
-                    return reply.status(404).send({
-                        message: "Game not found or already started",
-                    });
-                });
+            const game = await prisma.game.findFirst({
+                where: {
+                    public_id: id,
+                    status: "lobby",
+                },
+                select: {
+                    max_rounds: true,
+                    criteria_id: true,
+                },
+            });
 
-            const images = await prisma.$queryRaw<Image[]>`
-                SELECT * FROM image ORDER BY RANDOM() LIMIT (
-                    SELECT max_rounds FROM game WHERE public_id = ${id}
-                )
+            if (!game) {
+                return reply.status(404).send({
+                    message: "Game not found or already started",
+                });
+            }
+
+            const roundsLimit = Math.max(game.max_rounds ?? 1, 1);
+            const imagesLimit = roundsLimit * 2;
+
+            const images = await prisma.$queryRaw<{ image_id: number }[]>`
+                SELECT i.image_id
+                FROM image i
+                JOIN image_rating ir ON ir.image_id = i.image_id
+                WHERE ir.criteria_id = ${game.criteria_id}
+                ORDER BY RANDOM()
+                LIMIT ${imagesLimit}
             `;
+
+            if (images.length < imagesLimit) {
+                return reply.status(409).send({
+                    message: "Not enough images for selected criteria to start game with configured rounds",
+                });
+            }
 
             const data = await prisma.game.update({
                 where: {
@@ -68,6 +84,7 @@ export default async function startGame(app: FastifyInstance) {
             });
 
             await publishRoundUpdate(data.public_id);
+            await publishGameUpdate(data.public_id);
 
             return reply.status(200).send({
                 message: "Game started successfully",

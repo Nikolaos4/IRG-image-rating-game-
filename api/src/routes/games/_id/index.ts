@@ -36,6 +36,12 @@ export default async function getGame(app: FastifyInstance) {
                             },
                         },
                         creator: true,
+                        criteria: {
+                            select: {
+                                criteria_id: true,
+                                name: true,
+                            },
+                        },
                     },
                 })
                 .catch(() => {
@@ -48,9 +54,13 @@ export default async function getGame(app: FastifyInstance) {
                 game: {
                     status: data.status,
                     game_id: data.public_id,
+                    max_players: data.max_players,
                     max_rounds: data.max_rounds,
                     current_round: data.current_round,
-                    criteria_id: data.criteria_id,
+                    criteria: {
+                        criteria_id: data.criteria.criteria_id,
+                        name: data.criteria.name,
+                    },
 
                     creator: {
                         user_id: data.creator.user_id,

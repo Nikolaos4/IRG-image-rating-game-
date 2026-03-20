@@ -14,9 +14,19 @@
     &__right-section {
         margin-left: auto;
 
+        .current-user-wrap {
+            position: relative;
+        }
+
         .current-user {
             display: flex;
             align-items: center;
+            border: none;
+            background: transparent;
+            font: inherit;
+            cursor: pointer;
+            padding: 0;
+            color: inherit;
 
             &__avatar {
                 width: 58px;
@@ -29,6 +39,10 @@
             &__name {
                 font-weight: 500;
                 font-size: 1.25rem;
+            }
+
+            &:hover {
+                background-color: color-mix(in srgb, var(--color-primary), transparent 88%);
             }
         }
     }

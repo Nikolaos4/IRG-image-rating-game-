@@ -1,0 +1,33 @@
+.game-results {
+    margin-top: 20px;
+
+    .error {
+        color: var(--color-danger);
+    }
+
+    .stats-table {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px 16px;
+        align-items: center;
+
+        .head {
+            font-weight: 700;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 6px;
+        }
+    }
+
+    .images-rating {
+        margin-top: 12px;
+        padding-left: 20px;
+
+        li {
+            display: grid;
+            grid-template-columns: 48px 1fr auto;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+    }
+}

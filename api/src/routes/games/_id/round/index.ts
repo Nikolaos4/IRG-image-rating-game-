@@ -29,28 +29,86 @@ export default async function getRound(app: FastifyInstance) {
         async (request: FastifyRequest, reply: FastifyReply) => {
             const { id } = request.params as z.infer<typeof GetGameParams>;
 
-            const data = await prisma.round
-                .findFirstOrThrow({
-                    where: {
-                        game: {
-                            public_id: id,
+            const data = await prisma.round.findFirst({
+                where: {
+                    game: {
+                        public_id: id,
+                    },
+                },
+                orderBy: {
+                    round_id: "desc",
+                },
+                include: {
+                    game: {
+                        select: {
+                            criteria_id: true,
+                            current_round: true,
                         },
                     },
-                    orderBy: {
-                        round_id: "desc",
+                    firstImage: {
+                        select: {
+                            url: true,
+                        },
                     },
-                })
-                .catch(() => {
-                    return reply.status(404).send({
-                        message: "Round not found",
-                    });
+                    secondImage: {
+                        select: {
+                            url: true,
+                        },
+                    },
+                },
+            });
+
+            if (!data) {
+                return reply.status(404).send({
+                    message: "Round not found",
                 });
+            }
+
+            const knownImageRating = await prisma.imageRating.findUnique({
+                where: {
+                    image_id_criteria_id: {
+                        image_id: data.first_image,
+                        criteria_id: data.game.criteria_id,
+                    },
+                },
+                select: {
+                    votes: true,
+                },
+            });
+
+            const firstImageRoundVotes = await prisma.vote.count({
+                where: {
+                    round_id: data.round_id,
+                    voted_image_id: data.first_image,
+                },
+            });
+
+            const firstImageVotesBeforeRound = Math.max((knownImageRating?.votes ?? 0) - firstImageRoundVotes, 0);
+
+            const [votesReceived, votesRequired] = await Promise.all([
+                prisma.vote.count({
+                    where: {
+                        round_id: data.round_id,
+                    },
+                }),
+                prisma.gameMember.count({
+                    where: {
+                        game_id: data.game_id,
+                    },
+                }),
+            ]);
 
             return reply.status(200).send({
                 round: {
-                    round_id: data.round_id,
+                    current_round: data.game.current_round,
                     first_image: data.first_image,
                     second_image: data.second_image,
+                    first_image_url: data.firstImage.url,
+                    second_image_url: data.secondImage.url,
+                    first_image_votes: firstImageVotesBeforeRound,
+                    second_image_votes: null,
+                    votes_received: votesReceived,
+                    votes_required: votesRequired,
                 },
             });
         },
@@ -92,7 +150,7 @@ export default async function getRound(app: FastifyInstance) {
                     };
                 }
 
-                await tx.$queryRaw`SELECT pg_advisory_xact_lock(${gameRef.game_id})`;
+                await tx.$executeRaw`SELECT pg_advisory_xact_lock(${gameRef.game_id})`;
 
                 const game = await tx.game.findUnique({
                     where: {
@@ -103,6 +161,7 @@ export default async function getRound(app: FastifyInstance) {
                         public_id: true,
                         status: true,
                         current_round: true,
+                        max_rounds: true,
                         criteria_id: true,
                     },
                 });
@@ -151,6 +210,18 @@ export default async function getRound(app: FastifyInstance) {
                     orderBy: {
                         round_id: "desc",
                     },
+                    include: {
+                        firstImage: {
+                            select: {
+                                url: true,
+                            },
+                        },
+                        secondImage: {
+                            select: {
+                                url: true,
+                            },
+                        },
+                    },
                 });
 
                 if (!round) {
@@ -198,24 +269,26 @@ export default async function getRound(app: FastifyInstance) {
                     },
                 });
 
-                await tx.imageRating.upsert({
+                const ratingUpdate = await tx.imageRating.updateMany({
                     where: {
-                        image_id_criteria_id: {
-                            image_id: voted_image_id,
-                            criteria_id: game.criteria_id,
-                        },
+                        image_id: voted_image_id,
+                        criteria_id: game.criteria_id,
                     },
-                    update: {
+                    data: {
                         votes: {
                             increment: 1,
                         },
                     },
-                    create: {
-                        image_id: voted_image_id,
-                        criteria_id: game.criteria_id,
-                        votes: 1,
-                    },
                 });
+
+                if (ratingUpdate.count === 0) {
+                    return {
+                        statusCode: 409,
+                        payload: {
+                            message: "Selected image is not configured for this criteria",
+                        },
+                    };
+                }
 
                 const membersCount = await tx.gameMember.count({
                     where: {
@@ -232,10 +305,11 @@ export default async function getRound(app: FastifyInstance) {
                 if (roundVotesCount < membersCount) {
                     return {
                         statusCode: 200,
+                        publishGameId: game.public_id,
                         payload: {
                             message: "Vote accepted. Waiting for other players",
                             round: {
-                                round_id: round.round_id,
+                                current_round: game.current_round,
                                 votes_received: roundVotesCount,
                                 votes_required: membersCount,
                             },
@@ -264,9 +338,27 @@ export default async function getRound(app: FastifyInstance) {
                     }),
                 ]);
 
-                const firstImageVotes = firstImageRating?.votes ?? 0;
-                const secondImageVotes = secondImageRating?.votes ?? 0;
-                const winnerImageId = firstImageVotes >= secondImageVotes ? round.first_image : round.second_image;
+                const [firstImageRoundVotes, secondImageRoundVotes] = await Promise.all([
+                    tx.vote.count({
+                        where: {
+                            round_id: round.round_id,
+                            voted_image_id: round.first_image,
+                        },
+                    }),
+                    tx.vote.count({
+                        where: {
+                            round_id: round.round_id,
+                            voted_image_id: round.second_image,
+                        },
+                    }),
+                ]);
+
+                const firstImageVotesCurrent = firstImageRating?.votes ?? 0;
+                const secondImageVotesCurrent = secondImageRating?.votes ?? 0;
+                const firstImageVotesBeforeRound = Math.max(firstImageVotesCurrent - firstImageRoundVotes, 0);
+                const secondImageVotesBeforeRound = Math.max(secondImageVotesCurrent - secondImageRoundVotes, 0);
+                const winnerImageId =
+                    firstImageVotesBeforeRound >= secondImageVotesBeforeRound ? round.first_image : round.second_image;
 
                 const gameImages = await tx.gameImage.findMany({
                     where: {
@@ -280,11 +372,17 @@ export default async function getRound(app: FastifyInstance) {
                     },
                 });
 
-                const maxDuelRounds = Math.max(gameImages.length - 1, 0);
-                const isFinalRound = game.current_round >= maxDuelRounds;
-                const nextImage = gameImages[game.current_round + 1]?.image_id;
+                const maxRoundsBySettings = Math.max(game.max_rounds ?? 1, 1);
+                const maxRoundsByImages = Math.floor(gameImages.length / 2);
+                const totalRounds = Math.min(maxRoundsBySettings, maxRoundsByImages);
+                const isFinalRound = game.current_round >= totalRounds;
 
-                if (isFinalRound || !nextImage) {
+                const nextRoundNumber = game.current_round + 1;
+                const nextPairStartIndex = (nextRoundNumber - 1) * 2;
+                const nextFirstImage = gameImages[nextPairStartIndex]?.image_id;
+                const nextSecondImage = gameImages[nextPairStartIndex + 1]?.image_id;
+
+                if (isFinalRound || !nextFirstImage || !nextSecondImage) {
                     const loserImageId = winnerImageId === round.first_image ? round.second_image : round.first_image;
 
                     const winnerVoters = await tx.vote.findMany({
@@ -360,6 +458,18 @@ export default async function getRound(app: FastifyInstance) {
                     return {
                         statusCode: 200,
                         publishGameId: finishedGame.public_id,
+                        completedRoundData: {
+                            current_round: game.current_round,
+                            first_image: round.first_image,
+                            second_image: round.second_image,
+                            first_image_url: round.firstImage.url,
+                            second_image_url: round.secondImage.url,
+                            winner_image_id: winnerImageId,
+                            first_image_votes: firstImageVotesBeforeRound,
+                            second_image_votes: secondImageVotesBeforeRound,
+                            votes_received: roundVotesCount,
+                            votes_required: membersCount,
+                        },
                         payload: {
                             message: "Final vote accepted. Game finished",
                             game: {
@@ -367,10 +477,12 @@ export default async function getRound(app: FastifyInstance) {
                                 status: finishedGame.status,
                             },
                             round: {
-                                round_id: round.round_id,
+                                current_round: game.current_round,
                                 winner_image_id: winnerImageId,
-                                first_image_votes: firstImageVotes,
-                                second_image_votes: secondImageVotes,
+                                first_image_votes: firstImageVotesBeforeRound,
+                                second_image_votes: secondImageVotesBeforeRound,
+                                unknown_image_id: round.second_image,
+                                unknown_image_votes: secondImageVotesBeforeRound,
                             },
                         },
                     };
@@ -386,38 +498,99 @@ export default async function getRound(app: FastifyInstance) {
                         },
                         rounds: {
                             create: {
-                                first_image: winnerImageId,
-                                second_image: nextImage,
+                                first_image: nextFirstImage,
+                                second_image: nextSecondImage,
                             },
                         },
                     },
                     select: {
                         public_id: true,
                         current_round: true,
+                        criteria_id: true,
+                    },
+                });
+
+                const nextRoundData = await tx.round.findFirst({
+                    where: {
+                        game_id: game.game_id,
+                    },
+                    orderBy: {
+                        round_id: "desc",
+                    },
+                    include: {
+                        firstImage: {
+                            select: {
+                                url: true,
+                            },
+                        },
+                        secondImage: {
+                            select: {
+                                url: true,
+                            },
+                        },
+                    },
+                });
+
+                const nextRoundFirstImageRating = await tx.imageRating.findUnique({
+                    where: {
+                        image_id_criteria_id: {
+                            image_id: nextFirstImage,
+                            criteria_id: updatedGame.criteria_id,
+                        },
+                    },
+                    select: {
+                        votes: true,
                     },
                 });
 
                 return {
                     statusCode: 200,
                     publishGameId: updatedGame.public_id,
+                    completedRoundData: {
+                        current_round: game.current_round,
+                        first_image: round.first_image,
+                        second_image: round.second_image,
+                        first_image_url: round.firstImage.url,
+                        second_image_url: round.secondImage.url,
+                        winner_image_id: winnerImageId,
+                        first_image_votes: firstImageVotesBeforeRound,
+                        second_image_votes: secondImageVotesBeforeRound,
+                        votes_received: roundVotesCount,
+                        votes_required: membersCount,
+                    },
                     payload: {
                         message: "Vote accepted. Next round started",
                         game: {
                             game_id: updatedGame.public_id,
                             current_round: updatedGame.current_round,
                         },
-                        round: {
-                            round_id: round.round_id,
+                        completedRound: {
+                            current_round: game.current_round,
+                            first_image: round.first_image,
+                            second_image: round.second_image,
+                            first_image_url: round.firstImage.url,
+                            second_image_url: round.secondImage.url,
                             winner_image_id: winnerImageId,
-                            first_image_votes: firstImageVotes,
-                            second_image_votes: secondImageVotes,
+                            first_image_votes: firstImageVotesBeforeRound,
+                            second_image_votes: secondImageVotesBeforeRound,
+                            votes_received: roundVotesCount,
+                            votes_required: membersCount,
+                        },
+                        round: {
+                            current_round: updatedGame.current_round,
+                            first_image: nextFirstImage,
+                            second_image: nextSecondImage,
+                            first_image_url: nextRoundData?.firstImage.url ?? "",
+                            second_image_url: nextRoundData?.secondImage.url ?? "",
+                            first_image_votes: nextRoundFirstImageRating?.votes ?? 0,
+                            second_image_votes: null,
                         },
                     },
                 };
             });
 
             if (voteResult.publishGameId) {
-                await publishRoundUpdate(voteResult.publishGameId);
+                await publishRoundUpdate(voteResult.publishGameId, voteResult.completedRoundData);
             }
 
             return reply.status(voteResult.statusCode).send(voteResult.payload);

@@ -23,6 +23,7 @@ const __dirname = dirname(__filename);
 
 app.register(cors, {
     origin: "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 });
 
 await app.register(fastifyZodOpenApiPlugin);
@@ -51,6 +52,8 @@ app.register(swagger, {
             { name: "auth", description: "auth" },
             { name: "game", description: "game" },
             { name: "theme", description: "theme" },
+            { name: "rating", description: "rating" },
+            { name: "admin", description: "admin" },
         ],
         components: {
             securitySchemes: {

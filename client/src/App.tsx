@@ -6,6 +6,9 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import Header from "./components/Header/Header";
 import ThemesPage from "./pages/ThemesPage/ThemesPage";
+import GamePage from "./pages/GamePage/GamePage";
+import RatingPage from "./pages/RatingPage/RatingPage";
+import AdminPage from "./pages/AdminPage/AdminPage";
 import { useAuth } from "./contexts/AuthContext";
 
 function GuestOnlyRoute({ children }: { children: ReactNode }) {
@@ -16,6 +19,44 @@ function GuestOnlyRoute({ children }: { children: ReactNode }) {
     }
 
     if (isAuthenticated) {
+        return (
+            <Navigate
+                to="/"
+                replace
+            />
+        );
+    }
+
+    return children;
+}
+
+function ProtectedRoute({ children }: { children: ReactNode }) {
+    const { isAuthenticated, isLoading } = useAuth();
+
+    if (isLoading) {
+        return null;
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <Navigate
+                to="/"
+                replace
+            />
+        );
+    }
+
+    return children;
+}
+
+function AdminOnlyRoute({ children }: { children: ReactNode }) {
+    const { isAuthenticated, isLoading, user } = useAuth();
+
+    if (isLoading) {
+        return null;
+    }
+
+    if (!isAuthenticated || user?.role !== "admin") {
         return (
             <Navigate
                 to="/"
@@ -38,7 +79,35 @@ function App() {
                 />
                 <Route
                     path="/themes"
-                    element={<ThemesPage />}
+                    element={
+                        <ProtectedRoute>
+                            <ThemesPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/game/:id"
+                    element={
+                        <ProtectedRoute>
+                            <GamePage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/rating"
+                    element={
+                        <ProtectedRoute>
+                            <RatingPage />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin"
+                    element={
+                        <AdminOnlyRoute>
+                            <AdminPage />
+                        </AdminOnlyRoute>
+                    }
                 />
                 <Route
                     path="/login"

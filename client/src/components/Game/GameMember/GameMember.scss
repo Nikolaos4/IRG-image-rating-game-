@@ -1,0 +1,16 @@
+.member {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .avatar {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background-color: var(--color-primary);
+    }
+
+    .name {
+        font-weight: 500;
+    }
+}

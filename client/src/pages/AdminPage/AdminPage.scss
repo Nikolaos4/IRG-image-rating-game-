@@ -1,0 +1,132 @@
+.admin-page {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    &__subtitle {
+        color: color-mix(in srgb, var(--color-text), transparent 25%);
+    }
+
+    .admin-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--color-border-colored);
+        border-radius: 16px;
+        padding: 24px;
+
+        &::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--color-border-colored);
+            border-radius: 2px;
+        }
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px 14px;
+            white-space: nowrap;
+        }
+
+        th {
+            font-weight: 600;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            background: color-mix(in srgb, var(--color-border-colored), white 35%);
+
+            &--admin {
+                background: color-mix(in srgb, var(--color-primary), white 65%);
+                color: color-mix(in srgb, var(--color-primary), black 30%);
+            }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+
+            &--active {
+                background: color-mix(in srgb, #2ca54a, white 78%);
+                color: color-mix(in srgb, #2ca54a, black 30%);
+            }
+
+            &--blocked {
+                background: color-mix(in srgb, #d63f3f, white 78%);
+                color: color-mix(in srgb, #d63f3f, black 30%);
+            }
+        }
+
+        .action-btn {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+
+            &--block {
+                background: color-mix(in srgb, #d63f3f, white 78%);
+                color: color-mix(in srgb, #d63f3f, black 30%);
+            }
+
+            &--unblock {
+                background: color-mix(in srgb, #2ca54a, white 78%);
+                color: color-mix(in srgb, #2ca54a, black 30%);
+            }
+
+            &--edit {
+                background: color-mix(in srgb, var(--color-primary), white 78%);
+                color: color-mix(in srgb, var(--color-primary), black 25%);
+            }
+
+            &--secondary {
+                background: color-mix(in srgb, var(--color-border-colored), white 45%);
+                color: var(--color-text);
+            }
+
+            &:disabled {
+                opacity: 0.55;
+                cursor: not-allowed;
+            }
+        }
+
+        .actions-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    }
+
+    .edit-user-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .edit-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .edit-error {
+            margin: 0;
+            color: #d63f3f;
+            font-size: 0.95rem;
+        }
+    }
+}
