@@ -57,9 +57,13 @@ export default function GameLobby({ game, currentUserId, onStatusUpdated, onGame
         }
     }
 
+    function copyLink() {
+        window.navigator.clipboard.writeText(`${window.location.host}/game/${game.game_id}`);
+    }
+
     return (
         <div className="game-lobby">
-            <Button>Скопировать ссылку</Button>
+            <Button onClick={copyLink}>Скопировать ссылку</Button>
             <div className="rounds">Раундов: {game.max_rounds}</div>
             <div className="members">
                 Участников: {game.members.length + 1} из {game.max_players}
