@@ -12,6 +12,15 @@
         border: 1px solid var(--color-border-colored);
         border-radius: 16px;
         padding: 24px;
+
+        &::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: var(--color-border-colored);
+            border-radius: 2px;
+        }
     }
 
     .admin-table {
