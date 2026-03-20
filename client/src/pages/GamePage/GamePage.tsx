@@ -10,6 +10,26 @@ import { useAuth } from "@/contexts/AuthContext";
 const TOKEN_STORAGE_KEY = "compairy_jwt";
 const FINAL_ROUND_REVEAL_DELAY_MS = 3000;
 
+function areMembersEqual(
+    prevMembers: Array<{ user_id: number; username: string }>,
+    nextMembers: Array<{ user_id: number; username: string }>,
+) {
+    if (prevMembers.length !== nextMembers.length) {
+        return false;
+    }
+
+    for (let index = 0; index < prevMembers.length; index += 1) {
+        const prevMember = prevMembers[index];
+        const nextMember = nextMembers[index];
+
+        if (prevMember.user_id !== nextMember.user_id || prevMember.username !== nextMember.username) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 export default function GamePage() {
     const { id } = useParams<{ id: string }>();
     const { user } = useAuth();
@@ -81,6 +101,7 @@ export default function GamePage() {
 
                         const nextStatus = payload.status ?? prevGame.status;
                         const nextMembers = payload.members ?? prevGame.members;
+                        const isMembersUnchanged = areMembersEqual(prevGame.members, nextMembers);
 
                         if (prevGame.status === "active" && nextStatus === "finished") {
                             pendingFinalStatusRef.current = true;
@@ -101,6 +122,10 @@ export default function GamePage() {
                                 ...prevGame,
                                 members: nextMembers,
                             };
+                        }
+
+                        if (prevGame.status === nextStatus && isMembersUnchanged) {
+                            return prevGame;
                         }
 
                         return {
@@ -154,7 +179,6 @@ export default function GamePage() {
                     {game.status === "active" && (
                         <GameActive
                             game={game}
-                            onGameUpdated={loadGame}
                             onFinalRoundRevealFinished={handleFinalRoundRevealFinished}
                         />
                     )}
