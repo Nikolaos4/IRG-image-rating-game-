@@ -31,6 +31,19 @@ export default async function login(app: FastifyInstance) {
                 return reply.status(401).send({ message: "Invalid email or password" });
             }
 
+            const ban = await prisma.userBan.findFirst({
+                where: {
+                    user_id: user.user_id,
+                },
+                select: {
+                    reason: true,
+                },
+            });
+
+            if (ban) {
+                return reply.status(403).send({ message: `Вы заблокированы по причине: ${ban.reason}` });
+            }
+
             const isPasswordValid = await bcrypt.compare(password, user.password);
 
             if (!isPasswordValid) {

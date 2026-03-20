@@ -51,5 +51,47 @@
                 color: color-mix(in srgb, var(--color-primary), black 30%);
             }
         }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+
+            &--active {
+                background: color-mix(in srgb, #2ca54a, white 78%);
+                color: color-mix(in srgb, #2ca54a, black 30%);
+            }
+
+            &--blocked {
+                background: color-mix(in srgb, #d63f3f, white 78%);
+                color: color-mix(in srgb, #d63f3f, black 30%);
+            }
+        }
+
+        .action-btn {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+
+            &--block {
+                background: color-mix(in srgb, #d63f3f, white 78%);
+                color: color-mix(in srgb, #d63f3f, black 30%);
+            }
+
+            &--unblock {
+                background: color-mix(in srgb, #2ca54a, white 78%);
+                color: color-mix(in srgb, #2ca54a, black 30%);
+            }
+
+            &:disabled {
+                opacity: 0.55;
+                cursor: not-allowed;
+            }
+        }
     }
 }

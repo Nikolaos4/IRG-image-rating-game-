@@ -23,6 +23,7 @@ const __dirname = dirname(__filename);
 
 app.register(cors, {
     origin: "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 });
 
 await app.register(fastifyZodOpenApiPlugin);

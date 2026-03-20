@@ -4,8 +4,21 @@ import { prisma } from "@/lib/prisma.js";
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
     try {
         await request.jwtVerify();
-    } catch (err) {
+    } catch (_err) {
         return reply.status(401).send({ message: "Unauthorized" });
+    }
+
+    const ban = await prisma.userBan.findFirst({
+        where: {
+            user_id: request.user.user_id,
+        },
+        select: {
+            user_id: true,
+        },
+    });
+
+    if (ban) {
+        return reply.status(403).send({ message: "User is blocked" });
     }
 }
 

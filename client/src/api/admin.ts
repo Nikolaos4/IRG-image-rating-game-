@@ -8,6 +8,9 @@ export type AdminUser = {
     created_at: string;
     wins: number;
     losses: number;
+    is_blocked: boolean;
+    ban_reason: string | null;
+    banned_at: string | null;
 };
 
 type AdminUsersResponse = {
@@ -17,4 +20,14 @@ type AdminUsersResponse = {
 export async function getAdminUsersRequest() {
     const response = await http.get<AdminUsersResponse>("/admin");
     return response.data.users;
+}
+
+export async function blockUserRequest(userId: number) {
+    const response = await http.post<{ message: string }>(`/admin/${userId}/ban`);
+    return response.data;
+}
+
+export async function unblockUserRequest(userId: number) {
+    const response = await http.delete<{ message: string }>(`/admin/${userId}/ban`);
+    return response.data;
 }
