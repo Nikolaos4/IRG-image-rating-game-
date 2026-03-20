@@ -458,6 +458,18 @@ export default async function getRound(app: FastifyInstance) {
                     return {
                         statusCode: 200,
                         publishGameId: finishedGame.public_id,
+                        completedRoundData: {
+                            current_round: game.current_round,
+                            first_image: round.first_image,
+                            second_image: round.second_image,
+                            first_image_url: round.firstImage.url,
+                            second_image_url: round.secondImage.url,
+                            winner_image_id: winnerImageId,
+                            first_image_votes: firstImageVotesBeforeRound,
+                            second_image_votes: secondImageVotesBeforeRound,
+                            votes_received: roundVotesCount,
+                            votes_required: membersCount,
+                        },
                         payload: {
                             message: "Final vote accepted. Game finished",
                             game: {

@@ -1,13 +1,14 @@
 import { useParams } from "react-router-dom";
 import "./GamePage.scss";
 import { getGameRequest, getGameWsUrl, type GetGameResponse } from "@/api/game";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import GameLobby from "@/components/Game/GameLobby/GameLobby";
 import GameActive from "@/components/Game/GameActive/GameActive";
 import GameResults from "@/components/Game/GameResults/GameResults";
 import { useAuth } from "@/contexts/AuthContext";
 
 const TOKEN_STORAGE_KEY = "compairy_jwt";
+const FINAL_ROUND_REVEAL_DELAY_MS = 3000;
 
 export default function GamePage() {
     const { id } = useParams<{ id: string }>();
@@ -15,6 +16,8 @@ export default function GamePage() {
 
     const [game, setGame] = useState<GetGameResponse["game"] | null>(null);
     const [loading, setLoading] = useState(true);
+    const pendingFinalStatusRef = useRef(false);
+    const finalStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     if (!id) {
         return <div className="error">Игра не найдена</div>;
@@ -33,6 +36,23 @@ export default function GamePage() {
     useEffect(() => {
         void loadGame();
     }, [loadGame]);
+
+    const applyFinishedStatus = useCallback(() => {
+        setGame((current) => (current ? { ...current, status: "finished" } : current));
+        pendingFinalStatusRef.current = false;
+        if (finalStatusTimerRef.current) {
+            clearTimeout(finalStatusTimerRef.current);
+            finalStatusTimerRef.current = null;
+        }
+    }, []);
+
+    const handleFinalRoundRevealFinished = useCallback(() => {
+        if (!pendingFinalStatusRef.current) {
+            return;
+        }
+
+        applyFinishedStatus();
+    }, [applyFinishedStatus]);
 
     useEffect(() => {
         const token = localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -58,10 +78,35 @@ export default function GamePage() {
                 if (payload.type === "game:updated") {
                     setGame((prevGame) => {
                         if (!prevGame) return prevGame;
+
+                        const nextStatus = payload.status ?? prevGame.status;
+                        const nextMembers = payload.members ?? prevGame.members;
+
+                        if (prevGame.status === "active" && nextStatus === "finished") {
+                            pendingFinalStatusRef.current = true;
+
+                            if (finalStatusTimerRef.current) {
+                                clearTimeout(finalStatusTimerRef.current);
+                            }
+
+                            finalStatusTimerRef.current = setTimeout(() => {
+                                if (!isMounted) {
+                                    return;
+                                }
+
+                                applyFinishedStatus();
+                            }, FINAL_ROUND_REVEAL_DELAY_MS + 1500);
+
+                            return {
+                                ...prevGame,
+                                members: nextMembers,
+                            };
+                        }
+
                         return {
                             ...prevGame,
-                            status: payload.status ?? prevGame.status,
-                            members: payload.members ?? prevGame.members,
+                            status: nextStatus,
+                            members: nextMembers,
                         };
                     });
                 }
@@ -80,8 +125,12 @@ export default function GamePage() {
         return () => {
             isMounted = false;
             ws.close();
+            if (finalStatusTimerRef.current) {
+                clearTimeout(finalStatusTimerRef.current);
+                finalStatusTimerRef.current = null;
+            }
         };
-    }, [id]);
+    }, [applyFinishedStatus, id]);
 
     function handleStatusUpdated(status: string) {
         setGame((prevGame) => (prevGame ? { ...prevGame, status } : prevGame));
@@ -106,6 +155,7 @@ export default function GamePage() {
                         <GameActive
                             game={game}
                             onGameUpdated={loadGame}
+                            onFinalRoundRevealFinished={handleFinalRoundRevealFinished}
                         />
                     )}
                     {game.status === "finished" && <GameResults gameId={id} />}

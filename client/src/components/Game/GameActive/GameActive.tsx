@@ -14,9 +14,10 @@ const TOKEN_STORAGE_KEY = "compairy_jwt";
 interface Props {
     game: GetGameResponse["game"];
     onGameUpdated?: () => Promise<void> | void;
+    onFinalRoundRevealFinished?: () => void;
 }
 
-export default function GameActive({ game, onGameUpdated }: Props) {
+export default function GameActive({ game, onGameUpdated, onFinalRoundRevealFinished }: Props) {
     const [round, setRound] = useState<GetRoundResponse["round"] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isVoting, setIsVoting] = useState(false);
@@ -28,11 +29,16 @@ export default function GameActive({ game, onGameUpdated }: Props) {
     const [hasVotedInRound, setHasVotedInRound] = useState(false);
     const latestRoundRef = useRef<GetRoundResponse["round"] | null>(null);
     const onGameUpdatedRef = useRef<Props["onGameUpdated"]>(onGameUpdated);
+    const onFinalRoundRevealFinishedRef = useRef<Props["onFinalRoundRevealFinished"]>(onFinalRoundRevealFinished);
     const blockRealtimeUpdatesRef = useRef(false);
 
     useEffect(() => {
         onGameUpdatedRef.current = onGameUpdated;
     }, [onGameUpdated]);
+
+    useEffect(() => {
+        onFinalRoundRevealFinishedRef.current = onFinalRoundRevealFinished;
+    }, [onFinalRoundRevealFinished]);
 
     const loadRound = useCallback(async () => {
         try {
@@ -79,7 +85,6 @@ export default function GameActive({ game, onGameUpdated }: Props) {
                     votes_received: Math.min(prev.votes_received + 1, prev.votes_required),
                 };
             });
-            await onGameUpdatedRef.current?.();
         } catch (err) {
             const text = err instanceof Error ? err.message : "Не удалось отправить голос";
             setError(text);
@@ -138,6 +143,7 @@ export default function GameActive({ game, onGameUpdated }: Props) {
 
                 if (payload.type === "round:current") {
                     if (payload.completedRound) {
+                        const isFinalRound = !payload.round;
                         blockRealtimeUpdatesRef.current = true;
 
                         setWinnerImageId(payload.completedRound.winner_image_id);
@@ -165,6 +171,8 @@ export default function GameActive({ game, onGameUpdated }: Props) {
                             setSelectedImageId(null);
                             setWinnerImageId(null);
                             setHasVotedInRound(false);
+                        } else if (isFinalRound) {
+                            onFinalRoundRevealFinishedRef.current?.();
                         }
                     } else if (payload.round && !blockRealtimeUpdatesRef.current) {
                         void loadRound();
