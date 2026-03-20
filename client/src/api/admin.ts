@@ -13,6 +13,11 @@ export type AdminUser = {
     banned_at: string | null;
 };
 
+export type UpdateAdminUserRequest = {
+    username?: string;
+    role?: "user" | "admin";
+};
+
 type AdminUsersResponse = {
     users: AdminUser[];
 };
@@ -29,5 +34,10 @@ export async function blockUserRequest(userId: number) {
 
 export async function unblockUserRequest(userId: number) {
     const response = await http.delete<{ message: string }>(`/admin/${userId}/ban`);
+    return response.data;
+}
+
+export async function updateAdminUserRequest(userId: number, payload: UpdateAdminUserRequest) {
+    const response = await http.patch<{ message: string }>(`/admin/${userId}`, payload);
     return response.data;
 }

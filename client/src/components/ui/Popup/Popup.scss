@@ -50,5 +50,15 @@
                 background-color: color-mix(in srgb, #d63f3f, transparent 80%);
             }
         }
+
+        &--selected {
+            background-color: color-mix(in srgb, var(--color-primary), transparent 88%);
+        }
+    }
+
+    &--select {
+        right: auto;
+        left: 0;
+        width: 100%;
     }
 }

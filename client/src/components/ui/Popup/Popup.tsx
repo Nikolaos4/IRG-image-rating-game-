@@ -6,6 +6,7 @@ export type PopupAction = {
     label: string;
     onClick: () => void;
     danger?: boolean;
+    selected?: boolean;
 };
 
 type Props = {
@@ -61,7 +62,7 @@ export default function Popup({ isOpen, actions, onClose, className }: Props) {
                     <li key={action.key}>
                         <button
                             type="button"
-                            className={`popup__action ${action.danger ? "popup__action--danger" : ""}`.trim()}
+                            className={`popup__action ${action.danger ? "popup__action--danger" : ""} ${action.selected ? "popup__action--selected" : ""}`.trim()}
                             onClick={() => {
                                 action.onClick();
                                 onClose();

@@ -1,14 +1,28 @@
 import { useEffect, useState } from "react";
-import { blockUserRequest, getAdminUsersRequest, type AdminUser, unblockUserRequest } from "@/api/admin";
+import {
+    blockUserRequest,
+    getAdminUsersRequest,
+    type AdminUser,
+    unblockUserRequest,
+    updateAdminUserRequest,
+} from "@/api/admin";
 import { useAuth } from "@/contexts/AuthContext";
+import Modal from "@/components/ui/Modal/Modal";
 import "@/assets/scss/pages.scss";
 import "./AdminPage.scss";
+import Input from "@/components/ui/Input/Input";
+import Select from "@/components/ui/Select/Select";
 
 export default function AdminPage() {
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [pendingUserId, setPendingUserId] = useState<number | null>(null);
+    const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+    const [editUsername, setEditUsername] = useState("");
+    const [editRole, setEditRole] = useState<"user" | "admin">("user");
+    const [isEditSaving, setIsEditSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [editError, setEditError] = useState<string | null>(null);
     const { user: currentUser } = useAuth();
 
     const fetchUsers = async () => {
@@ -46,6 +60,49 @@ export default function AdminPage() {
             setError(message);
         } finally {
             setPendingUserId(null);
+        }
+    };
+
+    const openEditModal = (target: AdminUser) => {
+        setEditingUser(target);
+        setEditUsername(target.username);
+        setEditRole(target.role.toLowerCase() === "admin" ? "admin" : "user");
+        setEditError(null);
+    };
+
+    const closeEditModal = () => {
+        setEditingUser(null);
+        setEditError(null);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editingUser) {
+            return;
+        }
+
+        const trimmedUsername = editUsername.trim();
+
+        if (!trimmedUsername) {
+            setEditError("Имя пользователя не может быть пустым");
+            return;
+        }
+
+        try {
+            setIsEditSaving(true);
+            setEditError(null);
+
+            await updateAdminUserRequest(editingUser.user_id, {
+                username: trimmedUsername,
+                role: editRole,
+            });
+
+            await fetchUsers();
+            closeEditModal();
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Не удалось обновить пользователя";
+            setEditError(message);
+        } finally {
+            setIsEditSaving(false);
         }
     };
 
@@ -105,13 +162,26 @@ export default function AdminPage() {
                                     <td>{user.losses}</td>
                                     <td>{new Date(user.created_at).toLocaleDateString()}</td>
                                     <td>
-                                        <button
-                                            type="button"
-                                            className={`action-btn ${user.is_blocked ? "action-btn--unblock" : "action-btn--block"}`}
-                                            disabled={actionDisabled}
-                                            onClick={() => handleToggleBlock(user)}>
-                                            {isPending ? "..." : user.is_blocked ? "Разблокировать" : "Заблокировать"}
-                                        </button>
+                                        <div className="actions-cell">
+                                            <button
+                                                type="button"
+                                                className="action-btn action-btn--edit"
+                                                disabled={isPending}
+                                                onClick={() => openEditModal(user)}>
+                                                Редактировать
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className={`action-btn ${user.is_blocked ? "action-btn--unblock" : "action-btn--block"}`}
+                                                disabled={actionDisabled}
+                                                onClick={() => handleToggleBlock(user)}>
+                                                {isPending
+                                                    ? "..."
+                                                    : user.is_blocked
+                                                      ? "Разблокировать"
+                                                      : "Заблокировать"}
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             );
@@ -119,6 +189,48 @@ export default function AdminPage() {
                     </tbody>
                 </table>
             </div>
+
+            <Modal
+                isOpen={Boolean(editingUser)}
+                title="Редактирование пользователя"
+                onClose={closeEditModal}>
+                <div className="edit-user-form">
+                    <Input
+                        value={editUsername}
+                        onChange={(event) => setEditUsername(event.target.value)}
+                        placeholder="Введите имя"
+                    />
+
+                    <Select
+                        value={editRole}
+                        onChange={setEditRole}
+                        disabled={editingUser?.user_id === currentUser?.user_id}
+                        options={[
+                            { value: "user", label: "user" },
+                            { value: "admin", label: "admin" },
+                        ]}
+                    />
+
+                    {editError ? <p className="edit-error">{editError}</p> : null}
+
+                    <div className="edit-actions">
+                        <button
+                            type="button"
+                            className="action-btn action-btn--secondary"
+                            onClick={closeEditModal}
+                            disabled={isEditSaving}>
+                            Отмена
+                        </button>
+                        <button
+                            type="button"
+                            className="action-btn action-btn--edit"
+                            onClick={handleSaveEdit}
+                            disabled={isEditSaving}>
+                            {isEditSaving ? "Сохранение..." : "Сохранить"}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </main>
     );
 }

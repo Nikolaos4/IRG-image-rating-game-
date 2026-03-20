@@ -88,10 +88,45 @@
                 color: color-mix(in srgb, #2ca54a, black 30%);
             }
 
+            &--edit {
+                background: color-mix(in srgb, var(--color-primary), white 78%);
+                color: color-mix(in srgb, var(--color-primary), black 25%);
+            }
+
+            &--secondary {
+                background: color-mix(in srgb, var(--color-border-colored), white 45%);
+                color: var(--color-text);
+            }
+
             &:disabled {
                 opacity: 0.55;
                 cursor: not-allowed;
             }
+        }
+
+        .actions-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    }
+
+    .edit-user-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .edit-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .edit-error {
+            margin: 0;
+            color: #d63f3f;
+            font-size: 0.95rem;
         }
     }
 }
