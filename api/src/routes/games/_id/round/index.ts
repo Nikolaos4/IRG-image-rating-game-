@@ -76,6 +76,15 @@ export default async function getRound(app: FastifyInstance) {
                 },
             });
 
+            const firstImageRoundVotes = await prisma.vote.count({
+                where: {
+                    round_id: data.round_id,
+                    voted_image_id: data.first_image,
+                },
+            });
+
+            const firstImageVotesBeforeRound = Math.max((knownImageRating?.votes ?? 0) - firstImageRoundVotes, 0);
+
             const [votesReceived, votesRequired] = await Promise.all([
                 prisma.vote.count({
                     where: {
@@ -96,7 +105,7 @@ export default async function getRound(app: FastifyInstance) {
                     second_image: data.second_image,
                     first_image_url: data.firstImage.url,
                     second_image_url: data.secondImage.url,
-                    first_image_votes: knownImageRating?.votes ?? 0,
+                    first_image_votes: firstImageVotesBeforeRound,
                     second_image_votes: null,
                     votes_received: votesReceived,
                     votes_required: votesRequired,
@@ -329,9 +338,27 @@ export default async function getRound(app: FastifyInstance) {
                     }),
                 ]);
 
-                const firstImageVotes = firstImageRating?.votes ?? 0;
-                const secondImageVotes = secondImageRating?.votes ?? 0;
-                const winnerImageId = firstImageVotes >= secondImageVotes ? round.first_image : round.second_image;
+                const [firstImageRoundVotes, secondImageRoundVotes] = await Promise.all([
+                    tx.vote.count({
+                        where: {
+                            round_id: round.round_id,
+                            voted_image_id: round.first_image,
+                        },
+                    }),
+                    tx.vote.count({
+                        where: {
+                            round_id: round.round_id,
+                            voted_image_id: round.second_image,
+                        },
+                    }),
+                ]);
+
+                const firstImageVotesCurrent = firstImageRating?.votes ?? 0;
+                const secondImageVotesCurrent = secondImageRating?.votes ?? 0;
+                const firstImageVotesBeforeRound = Math.max(firstImageVotesCurrent - firstImageRoundVotes, 0);
+                const secondImageVotesBeforeRound = Math.max(secondImageVotesCurrent - secondImageRoundVotes, 0);
+                const winnerImageId =
+                    firstImageVotesBeforeRound >= secondImageVotesBeforeRound ? round.first_image : round.second_image;
 
                 const gameImages = await tx.gameImage.findMany({
                     where: {
@@ -440,10 +467,10 @@ export default async function getRound(app: FastifyInstance) {
                             round: {
                                 current_round: game.current_round,
                                 winner_image_id: winnerImageId,
-                                first_image_votes: firstImageVotes,
-                                second_image_votes: secondImageVotes,
+                                first_image_votes: firstImageVotesBeforeRound,
+                                second_image_votes: secondImageVotesBeforeRound,
                                 unknown_image_id: round.second_image,
-                                unknown_image_votes: secondImageVotes,
+                                unknown_image_votes: secondImageVotesBeforeRound,
                             },
                         },
                     };
@@ -514,8 +541,8 @@ export default async function getRound(app: FastifyInstance) {
                         first_image_url: round.firstImage.url,
                         second_image_url: round.secondImage.url,
                         winner_image_id: winnerImageId,
-                        first_image_votes: firstImageVotes,
-                        second_image_votes: secondImageVotes,
+                        first_image_votes: firstImageVotesBeforeRound,
+                        second_image_votes: secondImageVotesBeforeRound,
                         votes_received: roundVotesCount,
                         votes_required: membersCount,
                     },
@@ -532,8 +559,8 @@ export default async function getRound(app: FastifyInstance) {
                             first_image_url: round.firstImage.url,
                             second_image_url: round.secondImage.url,
                             winner_image_id: winnerImageId,
-                            first_image_votes: firstImageVotes,
-                            second_image_votes: secondImageVotes,
+                            first_image_votes: firstImageVotesBeforeRound,
+                            second_image_votes: secondImageVotesBeforeRound,
                             votes_received: roundVotesCount,
                             votes_required: membersCount,
                         },

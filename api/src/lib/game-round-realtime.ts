@@ -105,7 +105,7 @@ export async function createRoundStateMessage(
     let round = null;
 
     if (currentRound && game.status === "active") {
-        const [firstImageRating, votesReceived, votesRequired] = await Promise.all([
+        const [firstImageRating, votesReceived, votesRequired, firstImageRoundVotes] = await Promise.all([
             prisma.imageRating.findUnique({
                 where: {
                     image_id_criteria_id: {
@@ -127,7 +127,15 @@ export async function createRoundStateMessage(
                     game_id: currentRound.game_id,
                 },
             }),
+            prisma.vote.count({
+                where: {
+                    round_id: currentRound.round_id,
+                    voted_image_id: currentRound.first_image,
+                },
+            }),
         ]);
+
+        const firstImageVotesBeforeRound = Math.max((firstImageRating?.votes ?? 0) - firstImageRoundVotes, 0);
 
         round = {
             current_round: game.current_round,
@@ -135,7 +143,7 @@ export async function createRoundStateMessage(
             second_image: currentRound.second_image,
             first_image_url: currentRound.firstImage.url,
             second_image_url: currentRound.secondImage.url,
-            first_image_votes: firstImageRating?.votes ?? 0,
+            first_image_votes: firstImageVotesBeforeRound,
             second_image_votes: null,
             votes_received: votesReceived,
             votes_required: votesRequired,
