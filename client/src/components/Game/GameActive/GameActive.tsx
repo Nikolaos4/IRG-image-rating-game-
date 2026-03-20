@@ -25,6 +25,7 @@ export default function GameActive({ game, onGameUpdated }: Props) {
     const [revealedUnknownVotes, setRevealedUnknownVotes] = useState<number | null>(null);
     const [selectedImageId, setSelectedImageId] = useState<number | null>(null);
     const [winnerImageId, setWinnerImageId] = useState<number | null>(null);
+    const [hasVotedInRound, setHasVotedInRound] = useState(false);
     const latestRoundRef = useRef<GetRoundResponse["round"] | null>(null);
     const onGameUpdatedRef = useRef<Props["onGameUpdated"]>(onGameUpdated);
     const blockRealtimeUpdatesRef = useRef(false);
@@ -44,6 +45,7 @@ export default function GameActive({ game, onGameUpdated }: Props) {
             setRevealedUnknownVotes((prev) => (isRoundChanged ? null : prev));
             setSelectedImageId((prev) => (isRoundChanged ? null : prev));
             setWinnerImageId((prev) => (isRoundChanged ? null : prev));
+            setHasVotedInRound((prev) => (isRoundChanged ? false : prev));
             setRound(response.round);
             latestRoundRef.current = response.round;
         } catch (err) {
@@ -55,7 +57,9 @@ export default function GameActive({ game, onGameUpdated }: Props) {
     }, [game.game_id]);
 
     const handleVote = async (imageId: number) => {
-        if (isVoting) return;
+        if (isVoting || hasVotedInRound) {
+            return;
+        }
         try {
             setIsVoting(true);
             setError(null);
@@ -63,6 +67,7 @@ export default function GameActive({ game, onGameUpdated }: Props) {
             setSelectedImageId(imageId);
 
             await voteRoundRequest(game.game_id, { voted_image_id: imageId });
+            setHasVotedInRound(true);
 
             setRound((prev) => {
                 if (!prev) {
@@ -159,6 +164,7 @@ export default function GameActive({ game, onGameUpdated }: Props) {
                             setRevealedUnknownVotes(null);
                             setSelectedImageId(null);
                             setWinnerImageId(null);
+                            setHasVotedInRound(false);
                         }
                     } else if (payload.round && !blockRealtimeUpdatesRef.current) {
                         void loadRound();
@@ -213,6 +219,7 @@ export default function GameActive({ game, onGameUpdated }: Props) {
                 <div
                     className={`image-card ${selectedImageId === round.first_image ? "is-selected" : ""} ${
                         winnerImageId === round.first_image ? "is-winner" : ""
+                    } ${hasVotedInRound ? "is-disabled" : ""}
                     }`}
                     onClick={() => handleVote(round.first_image)}>
                     <img
@@ -225,6 +232,7 @@ export default function GameActive({ game, onGameUpdated }: Props) {
                 <div
                     className={`image-card ${selectedImageId === round.second_image ? "is-selected" : ""} ${
                         winnerImageId === round.second_image ? "is-winner" : ""
+                    } ${hasVotedInRound ? "is-disabled" : ""}
                     }`}
                     onClick={() => handleVote(round.second_image)}>
                     <img

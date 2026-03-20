@@ -53,6 +53,11 @@
             animation: winner-pop 1.5s ease;
         }
 
+        &.is-disabled {
+            cursor: not-allowed;
+            opacity: 0.78;
+        }
+
         .votes {
             text-align: center;
             font-weight: bold;
