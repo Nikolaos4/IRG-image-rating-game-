@@ -52,7 +52,7 @@ export default function GameResults({ gameId }: Props) {
             </div>
 
             <div>
-                <img src={`https://avatars.githubusercontent.com/u/112552699?v=4`} alt='profile photo' className="photo-kolyan"/>
+                <img src='https://avatars.githubusercontent.com/u/112552699?v=4' alt='profile photo' className="photo-kolyan"/>
                 <div className="player_name">{result.player_stats.map((player) => <Fragment key={player.user_id}>{player.username}</Fragment>)}</div>
             </div>
 
