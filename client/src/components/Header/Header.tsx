@@ -39,7 +39,7 @@ export default function Header() {
                         Игра
                     </Link>
                 )}
-                {user?.role === "admin" && (
+                {user && (
                     <Link to="/rating" data-active={location.pathname == "/rating"}>
                         Рейтинг
                     </Link>
