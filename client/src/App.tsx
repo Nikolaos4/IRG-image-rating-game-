@@ -96,9 +96,9 @@ function App() {
                 <Route
                     path="/rating"
                     element={
-                        <ProtectedRoute>
+                        <AdminOnlyRoute>
                             <RatingPage />
-                        </ProtectedRoute>
+                        </AdminOnlyRoute>
                     }
                 />
                 <Route

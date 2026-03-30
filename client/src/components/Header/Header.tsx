@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./Header.scss";
 import Button from "../ui/Button/Button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,8 @@ import Popup from "../ui/Popup/Popup";
 export default function Header() {
     const { isAuthenticated, user, logout } = useAuth();
     const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+    const location = useLocation();
 
     const popupActions = useMemo(
         () => [
@@ -23,11 +25,31 @@ export default function Header() {
 
     return (
         <header className="app-header">
-            <Link
+            <Link 
                 to="/"
                 className="app-header__title">
                 Compairy
             </Link>
+            <div className="app-header__center">
+                <Link to="/" data-active={location.pathname == "/"}>
+                    Главная
+                </Link>
+                {user && (
+                    <Link to="/themes" data-active={location.pathname == "/themes"}>
+                        Игра
+                    </Link>
+                )}
+                {user?.role === "admin" && (
+                    <Link to="/rating" data-active={location.pathname == "/rating"}>
+                        Рейтинг
+                    </Link>
+                )}
+                {user?.role === "admin" && (
+                    <Link to="/admin" data-active={location.pathname == "/admin"}>
+                        Пользователи
+                    </Link>
+                )}
+            </div>
             <div className="app-header__right-section">
                 {!isAuthenticated ? (
                     <Link
@@ -36,20 +58,22 @@ export default function Header() {
                         <Button>Войти</Button>
                     </Link>
                 ) : (
-                    <div className="current-user-wrap">
-                        <button
-                            type="button"
-                            className="current-user"
-                            onClick={() => setIsPopupOpen((prev) => !prev)}>
-                            <div className="current-user__avatar"></div>
-                            <span className="current-user__name">{user?.username}</span>
-                        </button>
-                        <Popup
-                            isOpen={isPopupOpen}
-                            actions={popupActions}
-                            onClose={() => setIsPopupOpen(false)}
-                        />
-                    </div>
+                    <>
+                        <div className="current-user-wrap">
+                            <button
+                                type="button"
+                                className="current-user"
+                                onClick={() => setIsPopupOpen((prev) => !prev)}>
+                                <div className="current-user__avatar"></div>
+                                <span className="current-user__name">{user?.username}</span>
+                            </button>
+                            <Popup
+                                isOpen={isPopupOpen}
+                                actions={popupActions}
+                                onClose={() => setIsPopupOpen(false)}
+                            />
+                        </div>
+                    </>
                 )}
             </div>
         </header>
