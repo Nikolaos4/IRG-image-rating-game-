@@ -28,6 +28,9 @@ model User {
   memberships GameMember[]
   votes       Vote[]
   games_created       Game[]
+  news_authored      News[]
+  telegram_accounts UserTg[]
+  tg_confirmations UserTgConfirmation[]
 
   @@map("user")
 }
@@ -53,6 +56,38 @@ model UserBan {
 
   @@id([user_id, banned_by])
   @@map("user_ban")
+}
+
+model UserTg {
+  user_id Int
+  tg_id BigInt
+
+  user User @relation(fields: [user_id], references: [user_id])
+
+  @@id([user_id, tg_id])
+
+  @@map("user_tg")
+}
+
+model UserTgConfirmation {
+  user_id Int @id
+  code String @default(uuid())
+
+  user User @relation(fields: [user_id], references: [user_id])
+
+  @@map("user_tg_confirmation")
+}
+
+model News {
+  news_id Int @id @default(autoincrement())
+  author_id Int
+  title String
+  content String
+  created_at DateTime @default(now())
+
+  author User @relation(fields: [author_id], references: [user_id])
+
+  @@map("news")
 }
 
 model Role {
