@@ -5,12 +5,14 @@ export type AuthResponse = {
 };
 
 export type LoginRequest = {
+    // Вместо email'а будет вводиться id в телеграме
     email: string;
     password: string;
 };
 
 export type RegisterRequest = {
     username: string;
+    // Вместо email'а будет вводиться id в телеграме
     email: string;
     password: string;
 };
@@ -18,6 +20,7 @@ export type RegisterRequest = {
 export type AuthUser = {
     user_id: number;
     username: string;
+    // Вместо email'а будет вводиться id в телеграме
     email: string;
     role: string;
     created_at: string;
@@ -30,3 +33,4 @@ export type AuthUser = {
 export type MeResponse = {
     user: AuthUser;
 };
+

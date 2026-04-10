@@ -1,4 +1,4 @@
-import { createNewsRequest } from "@/api/news";
+import { postNews } from "@/api/news";
 import "@/assets/scss/pages.scss";
 import Button from "@/components/ui/Button/Button";
 import Input from "@/components/ui/Input/Input";
@@ -15,7 +15,7 @@ export default function NewsPage() {
         const content = formData.get("content")?.toString()!;
 
         try {
-            await createNewsRequest({ title, content });
+            await postNews({ title, content });
             alert("Новость успешно создана!");
         } catch (error) {
             console.error("Error creating news request:", error);
