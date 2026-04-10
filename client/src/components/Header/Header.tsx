@@ -11,12 +11,14 @@ export default function Header() {
     const { isAuthenticated, user, logout } = useAuth();
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const [isConfirmed, setIsConfirmed] = useState(false);
 
     const location = useLocation();
 
     const connectTg = async () => {
         try {
             const code = await postConnectTgRequest();
+            setIsConfirmed(true);
             window.open(`https://t.me/compairy_bot?start=${code}`, "_blank");
             alert("Вы успешно подтвердили свой аккаунт и подписались на новости в telegram!");
         } catch (error) {
@@ -42,12 +44,12 @@ export default function Header() {
             },
             {
                 key: "connectTg",
-                label: "Подтвердить аккаунт",
+                label: `${isConfirmed ? "✅ Аккаунт подтвержден" : "❓ Подтвердить аккаунт"}`,
                 danger: false,
-                onClick: connectTg,
+                onClick: (isConfirmed ? () => {} : connectTg),
             },
         ],
-        [logout],
+        [logout, isConfirmed],
     );
 
     return (
