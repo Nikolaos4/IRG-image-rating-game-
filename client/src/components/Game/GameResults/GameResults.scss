@@ -13,9 +13,9 @@
         align-items: center;
 
         .head {
-            font-weight: 700;
-            border-bottom: 1px solid #ddd;
+            font-weight: bold;
             padding-bottom: 6px;
+            font-size: larger;
         }
     }
 
@@ -30,4 +30,79 @@
             margin-bottom: 6px;
         }
     }
+}
+
+.center {
+    display: flex;
+    margin-left: 30rem;
+    background-color: #efecfc;
+    color: rgba(0, 0, 0, 0.6);
+    width: fit-content;
+    height: fit-content;
+    margin-top: 0;
+    padding: 0 12px;
+    border-radius: 16px;
+}
+
+.photo-kolyan {
+    width: 30%;
+    height: 30%;
+    border-radius: 32px;
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+    margin-top: 20px;
+}
+
+.player_name {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.center-votes {
+    display: flex;
+    margin-left: 30rem;
+    background-color: #efecfc;
+    color: rgba(0, 0, 0, 0.6);
+    width: fit-content;
+    height: fit-content;
+    margin-top: 1rem;
+    padding: 0 12px;
+    border-radius: 16px;
+}
+
+.header-center {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+    font-weight: bold;
+}
+
+.answers {
+    display: flex;
+    justify-content: center;
+    background-color: #efecfc;
+    color: rgba(0, 0, 0, 0.6);
+    padding: 0 12px;
+    border-radius: 16px;
+    margin: 0 auto;
+}
+
+.user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: bold;
+        font-size: large;
+        margin-left: 0.1rem;
+
+        .avatar {
+            height: 50px;
+            width: 50px;
+            border-radius: 50%;
+            background-color: var(--color-primary);
+        }
 }

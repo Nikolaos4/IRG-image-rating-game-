@@ -1,4 +1,5 @@
 import type { GetGameResponse } from "@/api/game";
+import { memo } from "react";
 import "./GameMember.scss";
 
 interface Props {
@@ -6,7 +7,7 @@ interface Props {
     isCreator?: boolean;
 }
 
-export default function GameMember({ member, isCreator }: Props) {
+function GameMemberComponent({ member, isCreator }: Props) {
     return (
         <div
             className="member"
@@ -16,3 +17,13 @@ export default function GameMember({ member, isCreator }: Props) {
         </div>
     );
 }
+
+const GameMember = memo(GameMemberComponent, (prev, next) => {
+    return (
+        prev.isCreator === next.isCreator &&
+        prev.member.user_id === next.member.user_id &&
+        prev.member.username === next.member.username
+    );
+});
+
+export default GameMember;

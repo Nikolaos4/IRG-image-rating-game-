@@ -5,7 +5,7 @@ import {
     type GetGameResponse,
     type GetRoundResponse,
 } from "@/api/game";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import "./GameActive.scss";
 
 const ROUND_REVEAL_DELAY_MS = 3000;
@@ -13,11 +13,10 @@ const TOKEN_STORAGE_KEY = "compairy_jwt";
 
 interface Props {
     game: GetGameResponse["game"];
-    onGameUpdated?: () => Promise<void> | void;
     onFinalRoundRevealFinished?: () => void;
 }
 
-export default function GameActive({ game, onGameUpdated, onFinalRoundRevealFinished }: Props) {
+function GameActiveComponent({ game, onFinalRoundRevealFinished }: Props) {
     const [round, setRound] = useState<GetRoundResponse["round"] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isVoting, setIsVoting] = useState(false);
@@ -28,39 +27,39 @@ export default function GameActive({ game, onGameUpdated, onFinalRoundRevealFini
     const [winnerImageId, setWinnerImageId] = useState<number | null>(null);
     const [hasVotedInRound, setHasVotedInRound] = useState(false);
     const latestRoundRef = useRef<GetRoundResponse["round"] | null>(null);
-    const onGameUpdatedRef = useRef<Props["onGameUpdated"]>(onGameUpdated);
     const onFinalRoundRevealFinishedRef = useRef<Props["onFinalRoundRevealFinished"]>(onFinalRoundRevealFinished);
     const blockRealtimeUpdatesRef = useRef(false);
-
-    useEffect(() => {
-        onGameUpdatedRef.current = onGameUpdated;
-    }, [onGameUpdated]);
 
     useEffect(() => {
         onFinalRoundRevealFinishedRef.current = onFinalRoundRevealFinished;
     }, [onFinalRoundRevealFinished]);
 
-    const loadRound = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
-            const response = await getRoundRequest(game.game_id);
-            const isRoundChanged = Boolean(
-                latestRoundRef.current && latestRoundRef.current.current_round !== response.round.current_round,
-            );
-            setRevealedUnknownVotes((prev) => (isRoundChanged ? null : prev));
-            setSelectedImageId((prev) => (isRoundChanged ? null : prev));
-            setWinnerImageId((prev) => (isRoundChanged ? null : prev));
-            setHasVotedInRound((prev) => (isRoundChanged ? false : prev));
-            setRound(response.round);
-            latestRoundRef.current = response.round;
-        } catch (err) {
-            const text = err instanceof Error ? err.message : "Не удалось загрузить текущий раунд";
-            setError(text);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [game.game_id]);
+    const loadRound = useCallback(
+        async (showLoading = true) => {
+            try {
+                if (showLoading) {
+                    setIsLoading(true);
+                }
+                setError(null);
+                const response = await getRoundRequest(game.game_id);
+                const isRoundChanged = Boolean(
+                    latestRoundRef.current && latestRoundRef.current.current_round !== response.round.current_round,
+                );
+                setRevealedUnknownVotes((prev) => (isRoundChanged ? null : prev));
+                setSelectedImageId((prev) => (isRoundChanged ? null : prev));
+                setWinnerImageId((prev) => (isRoundChanged ? null : prev));
+                setHasVotedInRound((prev) => (isRoundChanged ? false : prev));
+                setRound(response.round);
+                latestRoundRef.current = response.round;
+            } catch (err) {
+                const text = err instanceof Error ? err.message : "Не удалось загрузить текущий раунд";
+                setError(text);
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [game.game_id],
+    );
 
     const handleVote = async (imageId: number) => {
         if (isVoting || hasVotedInRound) {
@@ -94,7 +93,7 @@ export default function GameActive({ game, onGameUpdated, onFinalRoundRevealFini
     };
 
     useEffect(() => {
-        void loadRound();
+        void loadRound(true);
     }, [loadRound]);
 
     useEffect(() => {
@@ -175,10 +174,18 @@ export default function GameActive({ game, onGameUpdated, onFinalRoundRevealFini
                             onFinalRoundRevealFinishedRef.current?.();
                         }
                     } else if (payload.round && !blockRealtimeUpdatesRef.current) {
-                        void loadRound();
-                    }
+                        const isRoundChanged = Boolean(
+                            latestRoundRef.current &&
+                            latestRoundRef.current.current_round !== payload.round.current_round,
+                        );
 
-                    void onGameUpdatedRef.current?.();
+                        setRevealedUnknownVotes((prev) => (isRoundChanged ? null : prev));
+                        setSelectedImageId((prev) => (isRoundChanged ? null : prev));
+                        setWinnerImageId((prev) => (isRoundChanged ? null : prev));
+                        setHasVotedInRound((prev) => (isRoundChanged ? false : prev));
+                        setRound(payload.round);
+                        latestRoundRef.current = payload.round;
+                    }
                 }
             } catch {
                 // Ignore malformed websocket payloads.
@@ -257,3 +264,16 @@ export default function GameActive({ game, onGameUpdated, onFinalRoundRevealFini
         </section>
     );
 }
+
+function areGameActivePropsEqual(prev: Props, next: Props) {
+    return (
+        prev.game.game_id === next.game.game_id &&
+        prev.game.status === next.game.status &&
+        prev.game.max_rounds === next.game.max_rounds &&
+        prev.onFinalRoundRevealFinished === next.onFinalRoundRevealFinished
+    );
+}
+
+const GameActive = memo(GameActiveComponent, areGameActivePropsEqual);
+
+export default GameActive;

@@ -37,6 +37,13 @@ export default async function getRating(app: FastifyInstance) {
                     losses: user.rating?.losses ?? 0,
                 }))
                 .sort((a, b) => {
+                    const aRatio = a.losses === 0 ? (a.wins > 0 ? Number.POSITIVE_INFINITY : 0) : a.wins / a.losses;
+                    const bRatio = b.losses === 0 ? (b.wins > 0 ? Number.POSITIVE_INFINITY : 0) : b.wins / b.losses;
+
+                    if (bRatio !== aRatio) {
+                        return bRatio - aRatio;
+                    }
+
                     if (b.wins !== a.wins) {
                         return b.wins - a.wins;
                     }
