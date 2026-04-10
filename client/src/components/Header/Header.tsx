@@ -6,7 +6,6 @@ import Button from "../ui/Button/Button";
 import { useAuth } from "@/contexts/AuthContext";
 import Popup from "../ui/Popup/Popup";
 import { postConnectTgRequest } from "@/api/account";
-import { postNews } from "@/api/news";
 
 export default function Header() {
     const { isAuthenticated, user, logout } = useAuth();
