@@ -3,6 +3,7 @@
     align-items: center;
     height: 70px;
     padding: 10px;
+    background-color: white;
 
     &__title {
         color: var(--color-primary);
@@ -58,7 +59,7 @@
 
         a {
             padding: 0 16px;
-            &[data-active="true"]{
+            &[data-active="true"] {
                 background-color: var(--color-primary);
                 color: white;
                 border-radius: 16px;
