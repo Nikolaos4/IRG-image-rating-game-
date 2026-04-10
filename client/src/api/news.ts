@@ -11,11 +11,11 @@ export type News = {
 };
 
 export async function postNews(payload: { title: string; content: string }) {
-    const response = await http.post<{ message: string }>("/", payload);
+    const response = await http.post<{ message: string }>("/news", payload);
     return response.data;
 }
 
 export async function getNews() {
-    const response = await http.get<News>("/");
+    const response = await http.get<News>("/news");
     return response.data.news;
 }
