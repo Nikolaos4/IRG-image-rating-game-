@@ -17,13 +17,14 @@ export default function Header() {
 
     const connectTg = async () => {
         try {
-            await postConnectTgRequest();
+            const code = await postConnectTgRequest();
+            window.open(`https://t.me/compairy_bot?start=${code}`, "_blank");
             alert("Вы успешно подтвердили свой аккаунт и подписались на новости в telegram!");
-        }
-        catch (error) {
+        } catch (error) {
             if (axios.isAxiosError(error)) {
                 setErrorMessage(
-                    (error.response?.data as { message?: string } | undefined)?.message ?? "Ошибка подтверждения аккаунта",
+                    (error.response?.data as { message?: string } | undefined)?.message ??
+                        "Ошибка подтверждения аккаунта",
                 );
             } else {
                 setErrorMessage("Ошибка подтверждения аккаунта");
