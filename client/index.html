@@ -2,12 +2,120 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/src/pages/IndexPage.scss" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>compairy</title>
   </head>
   <body>
     <div id="root"></div>
+    <div class="floating-photos" id="floatingPhotosContainer"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+        (function() {
+            const photosList = [
+                "https://i.redd.it/3yzvxoky9rqf1.jpeg",
+                "https://i.redd.it/efyfokgqbrqf1.jpeg",
+                "https://i.redd.it/pf1glvcxkrqf1.jpeg",
+                "https://i.redd.it/49ig54r7ywqf1.jpeg",
+                "https://i.redd.it/kca84fgo1zqf1.jpeg",
+                "https://i.redd.it/a9o22nlbc2rf1.jpeg",
+                "https://i.redd.it/t7lsd70huhrf1.jpeg",
+                "https://i.redd.it/pijosj0ejkrf1.jpeg",
+                "https://i.redd.it/3a9pyzejoqrf1.jpeg",
+                "https://i.redd.it/13hel5g8axrf1.png",
+            ];
+
+            const container = document.getElementById('floatingPhotosContainer');
+            if (!container) return;
+
+            let activePhotos = [];
+
+            function randomRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            function createPhoto() {
+                const photoUrl = photosList[Math.floor(Math.random() * photosList.length)];
+                
+                const photoDiv = document.createElement('div');
+                photoDiv.className = 'photo-item';
+                
+                const size = Math.floor(randomRange(80, 220));
+                photoDiv.style.width = size + 'px';
+                photoDiv.style.height = size + 'px';
+                
+                const leftPos = randomRange(0, 90);
+                const topPos = randomRange(0, 85);
+                photoDiv.style.left = leftPos + '%';
+                photoDiv.style.top = topPos + '%';
+                
+                const appearDelay = randomRange(0, 2000);
+                const visibleDuration = randomRange(2000, 5000);
+                
+                const img = document.createElement('img');
+                img.src = photoUrl;
+                img.alt = 'decorative photo';
+                img.loading = 'eager';
+                
+                photoDiv.appendChild(img);
+                container.appendChild(photoDiv);
+                
+                setTimeout(() => {
+                    photoDiv.classList.add('visible');
+                    
+                    setTimeout(() => {
+                        photoDiv.classList.remove('visible');
+                        setTimeout(() => {
+                            if (photoDiv.parentNode) {
+                                photoDiv.remove();
+                                const index = activePhotos.indexOf(photoDiv);
+                                if (index > -1) activePhotos.splice(index, 1);
+                            }
+                        }, 500);
+                    }, visibleDuration);
+                }, appearDelay);
+                
+                activePhotos.push(photoDiv);
+            }
+            
+            function createBatch() {
+                const count = Math.floor(randomRange(2, 6));
+                for (let i = 0; i < count; i++) {
+                    createPhoto();
+                }
+            }
+            
+            function startPhotoFlow() {
+                createBatch();
+                
+                setInterval(() => {
+                    createBatch();
+                    
+                    if (Math.random() > 0.6) {
+                        setTimeout(() => createPhoto(), 500);
+                    }
+                }, 4000);
+            }
+            
+            function startRandomFlow() {
+                setInterval(() => {
+                    if (Math.random() > 0.7) {
+                        createPhoto();
+                    }
+                }, 2000);
+            }
+            
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    startPhotoFlow();
+                    startRandomFlow();
+                });
+            } else {
+                startPhotoFlow();
+                startRandomFlow();
+            }
+        })();
+    </script>
   </body>
 </html>
