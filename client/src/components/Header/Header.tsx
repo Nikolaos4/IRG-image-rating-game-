@@ -28,8 +28,8 @@ export default function Header() {
             } else {
                 setErrorMessage("Ошибка подтверждения аккаунта");
             }
+            alert(`Error message: ${errorMessage}`);
         }
-        alert(errorMessage);
     };
 
     const popupActions = useMemo(
