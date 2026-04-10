@@ -63,10 +63,11 @@ export default function RegisterPage() {
                     />
 
                     <input
-                        type="email"
+                        type="text"
                         autoComplete="email"
+                        minLength={2}
                         value={email}
-                        placeholder="Почта"
+                        placeholder="id в telegram"
                         onChange={(event) => setEmail(event.target.value)}
                         required
                     />
