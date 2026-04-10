@@ -16,13 +16,14 @@ export default function Header() {
 
     const connectTg = async () => {
         try {
-            await postConnectTgRequest();
+            const code = await postConnectTgRequest();
+            window.open(`https://t.me/compairy_bot?start=${code}`, "_blank");
             alert("Вы успешно подтвердили свой аккаунт и подписались на новости в telegram!");
-        }
-        catch (error) {
+        } catch (error) {
             if (axios.isAxiosError(error)) {
                 setErrorMessage(
-                    (error.response?.data as { message?: string } | undefined)?.message ?? "Ошибка подтверждения аккаунта",
+                    (error.response?.data as { message?: string } | undefined)?.message ??
+                        "Ошибка подтверждения аккаунта",
                 );
             } else {
                 setErrorMessage("Ошибка подтверждения аккаунта");
@@ -51,28 +52,43 @@ export default function Header() {
 
     return (
         <header className="app-header">
-            <Link 
+            <Link
                 to="/"
                 className="app-header__title">
                 Compairy
             </Link>
             <div className="app-header__center">
-                <Link to="/" data-active={location.pathname == "/"}>
+                <Link
+                    to="/"
+                    data-active={location.pathname == "/"}>
                     Главная
                 </Link>
                 {user && (
-                    <Link to="/themes" data-active={location.pathname == "/themes"}>
+                    <Link
+                        to="/themes"
+                        data-active={location.pathname == "/themes"}>
                         Игра
                     </Link>
                 )}
                 {user && (
-                    <Link to="/rating" data-active={location.pathname == "/rating"}>
+                    <Link
+                        to="/rating"
+                        data-active={location.pathname == "/rating"}>
                         Рейтинг
                     </Link>
                 )}
                 {user?.role === "admin" && (
-                    <Link to="/admin" data-active={location.pathname == "/admin"}>
+                    <Link
+                        to="/admin"
+                        data-active={location.pathname == "/admin"}>
                         Пользователи
+                    </Link>
+                )}
+                {user?.role === "admin" && (
+                    <Link
+                        to="/news"
+                        data-active={location.pathname == "/news"}>
+                        Новости
                     </Link>
                 )}
             </div>

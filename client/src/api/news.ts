@@ -2,20 +2,20 @@ import { http } from "./http";
 
 export type News = {
     news: Array<{
-        news_id: number,
-        title: string,
-        content: string,
-        created_at: string,
-        author: string,
+        news_id: number;
+        title: string;
+        content: string;
+        created_at: string;
+        author: string;
     }>;
 };
 
-export async function postNews(payload : {title: string, content: string}) {
-    const response = await http.post<{ message: string }>("/", payload);
+export async function postNews(payload: { title: string; content: string }) {
+    const response = await http.post<{ message: string }>("/news", payload);
     return response.data;
 }
 
 export async function getNews() {
-    const response = await http.get<News>("/");
+    const response = await http.get<News>("/news");
     return response.data.news;
 }

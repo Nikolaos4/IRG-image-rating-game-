@@ -10,6 +10,7 @@ import GamePage from "./pages/GamePage/GamePage";
 import RatingPage from "./pages/RatingPage/RatingPage";
 import AdminPage from "./pages/AdminPage/AdminPage";
 import { useAuth } from "./contexts/AuthContext";
+import NewsPage from "./pages/NewsPage/NewsPage";
 
 function GuestOnlyRoute({ children }: { children: ReactNode }) {
     const { isAuthenticated, isLoading } = useAuth();
@@ -106,6 +107,14 @@ function App() {
                     element={
                         <AdminOnlyRoute>
                             <AdminPage />
+                        </AdminOnlyRoute>
+                    }
+                />
+                <Route
+                    path="/news"
+                    element={
+                        <AdminOnlyRoute>
+                            <NewsPage />
                         </AdminOnlyRoute>
                     }
                 />
