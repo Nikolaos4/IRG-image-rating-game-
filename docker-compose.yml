@@ -1,0 +1,73 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: compairy-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-compairy}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-compairy_password}
+      POSTGRES_DB: ${DB_NAME:-compairy}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - compairy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-compairy}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: compairy-api
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${DB_USER:-compairy}:${DB_PASSWORD:-compairy_password}@postgres:5432/${DB_NAME:-compairy}}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - compairy-network
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.bot
+    container_name: compairy-bot
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${DB_USER:-compairy}:${DB_PASSWORD:-compairy_password}@postgres:5432/${DB_NAME:-compairy}}
+      TG_TOKEN: ${TG_TOKEN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+    networks:
+      - compairy-network
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: compairy-client
+    ports:
+      - "${CLIENT_PORT:-80}:80"
+    depends_on:
+      - api
+    networks:
+      - compairy-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  compairy-network:
+    driver: bridge
