@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma.js";
 
 export default async function account(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().post(
-        "/connect-tg",
+        "/account/connect-tg",
         {
             onRequest: [authenticate],
             schema: {

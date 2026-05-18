@@ -3,11 +3,11 @@ import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { prisma } from "@/lib/prisma.js";
 import { authenticate } from "@/lib/authenticate.js";
-import { GetGameParams } from "../index.js";
+import { GetGameParams } from "./get-game.js";
 
 export default async function getResult(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().get(
-        "/",
+        "/games/:id/result",
         {
             onRequest: [authenticate],
             schema: {

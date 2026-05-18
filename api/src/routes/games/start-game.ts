@@ -5,12 +5,12 @@ import { prisma } from "@/lib/prisma.js";
 import { publishRoundUpdate } from "@/lib/game-round-realtime.js";
 import { publishGameUpdate } from "@/lib/game-realtime.js";
 
-import { GetGameParams } from "../index.js";
+import { GetGameParams } from "./get-game.js";
 import { authenticate } from "@/lib/authenticate.js";
 
 export default async function startGame(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().post(
-        "/",
+        "/games/:id/start",
         {
             onRequest: [authenticate],
             schema: {

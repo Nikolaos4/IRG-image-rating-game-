@@ -3,7 +3,7 @@ import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { prisma } from "@/lib/prisma.js";
 import { authenticate } from "@/lib/authenticate.js";
-import { GetGameParams } from "../index.js";
+import { GetGameParams } from "./get-game.js";
 import { publishRoundUpdate } from "@/lib/game-round-realtime.js";
 
 const VoteRoundRequestBody = z.object({
@@ -15,7 +15,7 @@ const VoteRoundRequestBody = z.object({
 
 export default async function getRound(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().get(
-        "/",
+        "/games/:id/round",
         {
             onRequest: [authenticate],
             schema: {
@@ -115,7 +115,7 @@ export default async function getRound(app: FastifyInstance) {
     );
 
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().post(
-        "/",
+        "/games/:id/round",
         {
             onRequest: [authenticate],
             schema: {

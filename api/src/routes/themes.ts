@@ -1,12 +1,11 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { prisma } from "@/lib/prisma.js";
 import { authenticate } from "@/lib/authenticate.js";
 
-export default async function getThemes(app: FastifyInstance) {
+export default async function themes(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().get(
-        "/",
+        "/themes",
         {
             onRequest: [authenticate],
             schema: {

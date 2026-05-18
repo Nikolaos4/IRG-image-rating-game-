@@ -11,7 +11,7 @@ export const JoinGameParams = z.object({
 
 export default async function joinGame(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().post(
-        "/",
+        "/games/:id/join",
         {
             onRequest: [authenticate],
             schema: {
