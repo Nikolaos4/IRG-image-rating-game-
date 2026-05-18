@@ -1,7 +1,4 @@
 import fastify from "fastify";
-import autoload from "@fastify/autoload";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import cors from "@fastify/cors";
@@ -16,10 +13,22 @@ import {
     serializerCompiler,
     validatorCompiler,
 } from "fastify-zod-openapi";
+import createGame from "./routes/games/create-game.js";
+import gameRealtime from "./routes/games/game-ws.js";
+import getGame from "./routes/games/get-game.js";
+import joinGame from "./routes/games/join-game.js";
+import getResult from "./routes/games/result.js";
+import roundRealtime from "./routes/games/round-ws.js";
+import getRound from "./routes/games/round.js";
+import editGame from "./routes/games/settings-game.js";
+import startGame from "./routes/games/start-game.js";
+import account from "./routes/account.js";
+import admin from "./routes/admin.js";
+import auth from "./routes/auth.js";
+import news from "./routes/news.js";
+import rating from "./routes/rating.js";
+import themes from "./routes/themes.js";
 const app = fastify();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 app.register(cors, {
     origin: "*",
@@ -72,19 +81,40 @@ app.register(swaggerUi, {
     routePrefix: "/docs",
 });
 
+app.after(() => {
+    app.register(
+        (app) => {
+            app.register(createGame);
+            app.register(gameRealtime);
+            app.register(getGame);
+            app.register(joinGame);
+            app.register(getResult);
+            app.register(roundRealtime);
+            app.register(getRound);
+            app.register(editGame);
+            app.register(startGame);
+
+            app.register(account);
+            app.register(admin);
+            app.register(auth);
+            app.register(news);
+            app.register(rating);
+            app.register(themes);
+        },
+        { prefix: "/api" },
+    );
+});
+
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-app.register(autoload, {
-    dir: join(__dirname, "routes"),
-    routeParams: true,
-    options: { prefix: "/api" },
-});
-
-app.listen({ port: 3000 }, (err, address) => {
+app.listen({ host: "0.0.0.0", port: 3000 }, (err, address) => {
     if (err) {
         console.error(err);
     }
 
     console.log(`Server is running at ${address}`);
 });
+await app.ready();
+
+app.swagger();

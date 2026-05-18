@@ -3,7 +3,7 @@ import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma.js";
 import { createGameStateMessage, registerGameClient } from "@/lib/game-realtime.js";
-import { GetGameParams } from "../index.js";
+import { GetGameParams } from "./get-game.js";
 
 const GameWsQuery = z.object({
     token: z.string().optional(),
@@ -11,7 +11,7 @@ const GameWsQuery = z.object({
 
 export default async function gameRealtime(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().get(
-        "/",
+        "/games/:id/ws",
         {
             websocket: true,
             schema: {

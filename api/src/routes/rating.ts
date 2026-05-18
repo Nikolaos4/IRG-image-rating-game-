@@ -3,9 +3,9 @@ import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { authenticate } from "@/lib/authenticate.js";
 import { prisma } from "@/lib/prisma.js";
 
-export default async function getRating(app: FastifyInstance) {
+export default async function rating(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().get(
-        "/",
+        "/rating",
         {
             onRequest: [authenticate],
             schema: {

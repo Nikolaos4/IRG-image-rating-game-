@@ -10,7 +10,7 @@ export const CreateGameRequestBody = z.object({
 
 export default async function createGame(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().post(
-        "/",
+        "/games",
         {
             onRequest: [authenticate],
             schema: {

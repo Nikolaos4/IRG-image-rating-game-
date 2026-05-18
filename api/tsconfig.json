@@ -3,12 +3,12 @@
         "target": "esnext",
         "module": "nodenext",
         "moduleResolution": "nodenext",
-        "outDir": "dist",
-        "rootDir": "src",
-        "baseUrl": ".",
+        "outDir": "./dist",
+        "rootDir": "./src",
         "paths": {
-            "@/*": ["src/*"]
-        }
+            "@/*": ["./src/*"]
+        },
+        "skipLibCheck": true
     },
-    "exclude": ["prisma.config.ts", "migrations/**/*.ts", "prisma/seed.ts", "generated/**/*.ts"]
+    "exclude": ["prisma.config.ts", "migrations/**/*.ts", "prisma/seed.ts", "generated/**/*.ts", "node_modules"]
 }

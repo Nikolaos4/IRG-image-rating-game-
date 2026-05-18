@@ -3,7 +3,7 @@ import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma.js";
 import { createRoundStateMessage, registerRoundClient } from "@/lib/game-round-realtime.js";
-import { GetGameParams } from "../../index.js";
+import { GetGameParams } from "./get-game.js";
 
 const RoundWsQuery = z.object({
     token: z.string().optional(),
@@ -11,7 +11,7 @@ const RoundWsQuery = z.object({
 
 export default async function roundRealtime(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().get(
-        "/",
+        "/games/:id/round/ws",
         {
             websocket: true,
             schema: {

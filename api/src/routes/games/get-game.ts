@@ -10,7 +10,7 @@ export const GetGameParams = z.object({
 
 export default async function getGame(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().get(
-        "/",
+        "/games/:id",
         {
             onRequest: [authenticate],
             schema: {

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { FastifyZodOpenApiTypeProvider } from "fastify-zod-openapi";
 import { prisma } from "@/lib/prisma.js";
 
-import { GetGameParams } from "../index.js";
+import { GetGameParams } from "./get-game.js";
 import { authenticate } from "@/lib/authenticate.js";
 import { publishGameUpdate } from "@/lib/game-realtime.js";
 
@@ -26,7 +26,7 @@ export const EditGameRequestBody = z
 
 export default async function editGame(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().patch(
-        "/",
+        "/games/:id/settings",
         {
             onRequest: [authenticate],
             schema: {

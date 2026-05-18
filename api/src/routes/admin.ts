@@ -17,9 +17,9 @@ const UpdateAdminUserBody = z
         message: "At least one field must be provided",
     });
 
-export default async function getUsersAdmin(app: FastifyInstance) {
+export default async function admin(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().get(
-        "/",
+        "/admin",
         {
             onRequest: [authorizeAdmin],
             schema: {
@@ -81,7 +81,7 @@ export default async function getUsersAdmin(app: FastifyInstance) {
     );
 
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().post(
-        "/:userId/ban",
+        "/admin/:userId/ban",
         {
             onRequest: [authorizeAdmin],
             schema: {
@@ -147,7 +147,7 @@ export default async function getUsersAdmin(app: FastifyInstance) {
     );
 
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().patch(
-        "/:userId",
+        "/admin/:userId",
         {
             onRequest: [authorizeAdmin],
             schema: {
@@ -235,7 +235,7 @@ export default async function getUsersAdmin(app: FastifyInstance) {
     );
 
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().delete(
-        "/:userId/ban",
+        "/admin/:userId/ban",
         {
             onRequest: [authorizeAdmin],
             schema: {

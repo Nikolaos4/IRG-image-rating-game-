@@ -12,7 +12,7 @@ const NewsRequestBody = z.object({
 
 export default async function news(app: FastifyInstance) {
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().post(
-        "/",
+        "/news",
         {
             onRequest: [authorizeAdmin],
             schema: {
@@ -54,7 +54,7 @@ export default async function news(app: FastifyInstance) {
     );
 
     app.withTypeProvider<FastifyZodOpenApiTypeProvider>().get(
-        "/",
+        "/news",
         {
             onRequest: [authenticate],
             schema: {
