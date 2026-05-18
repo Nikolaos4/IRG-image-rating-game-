@@ -38,6 +38,7 @@ export default function RatingPage() {
 
     return (
         <main className="rating-page">
+
             <h2>Рейтинг</h2>
 
             <div className="rating-table-wrap">

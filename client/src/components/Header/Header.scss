@@ -2,13 +2,15 @@
     display: flex;
     align-items: center;
     height: 70px;
-    padding: 8px;
+    padding: 10px;
+    background-color: white;
 
     &__title {
         color: var(--color-primary);
         font-weight: bold;
         text-decoration: none;
         font-size: 1.5rem;
+        padding: 8px;
     }
 
     &__right-section {
@@ -43,6 +45,26 @@
 
             &:hover {
                 background-color: color-mix(in srgb, var(--color-primary), transparent 88%);
+            }
+        }
+    }
+
+    &__center {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+
+        a {
+            padding: 0 16px;
+            &[data-active="true"] {
+                background-color: var(--color-primary);
+                color: white;
+                border-radius: 16px;
+                text-decoration: none;
+                padding: 8px 16px;
             }
         }
     }

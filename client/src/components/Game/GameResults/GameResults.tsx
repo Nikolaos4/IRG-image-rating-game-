@@ -47,33 +47,31 @@ export default function GameResults({ gameId }: Props) {
 
     return (
         <section className="game-results">
-            <h3>Игра завершена</h3>
-            <p>Раундов сыграно: {result.played_rounds}</p>
-            <p>Всего голосов: {result.total_votes}</p>
+            <div className="center">
+                {result.played_rounds} / {result.max_rounds} раунд
+            </div>
 
-            <h4>Статистика игроков</h4>
+            <div>
+                <img src='https://avatars.githubusercontent.com/u/112552699?v=4' alt='profile photo' className="photo-kolyan"/>
+                <div className="player_name">{result.player_stats.map((player) => <Fragment key={player.user_id}>{player.username}</Fragment>)}</div>
+            </div>
+
+            <div className="center-votes">
+                Угадано {result.player_stats.map((player) => <Fragment key={player.user_id}>{player.correct_answers}</Fragment>)} / {result.total_votes}
+            </div>
+
+            <h2 className="header-center">Статистика игроков</h2>
             <div className="stats-table">
                 <div className="head">Игрок</div>
-                <div className="head">Правильных ответов</div>
+                <div className="head">Правильные ответы</div>
 
                 {result.player_stats.map((player) => (
                     <Fragment key={player.user_id}>
-                        <div>{player.username}</div>
-                        <div>{player.correct_answers}</div>
+                        <div className="user"><div className="avatar"></div>{player.username}</div>
+                        <div className="answers">{player.correct_answers} / {result.total_votes}</div>
                     </Fragment>
                 ))}
             </div>
-
-            <h4>Топ изображений</h4>
-            <ol className="images-rating">
-                {result.results.map((image) => (
-                    <li key={image.image_id}>
-                        <span>#{image.position}</span>
-                        <span>image {image.image_id}</span>
-                        <span>{image.votes} голосов</span>
-                    </li>
-                ))}
-            </ol>
         </section>
     );
 }

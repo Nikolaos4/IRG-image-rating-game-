@@ -20,18 +20,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-
-        if (!storedToken) {
-            setIsLoading(false);
-            return;
-        }
-
-        setToken(storedToken);
-        fetchUserProfile().finally(() => setIsLoading(false));
-    }, []);
-
     const fetchUserProfile = async () => {
         try {
             const userData = await meRequest();
@@ -43,6 +31,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
         }
     };
+
+    useEffect(() => {
+        const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+
+        if (!storedToken) {
+            setIsLoading(false);
+            return;
+        }
+
+        setToken(storedToken);
+        fetchUserProfile().finally(() => setIsLoading(false));
+    }, []);
 
     const login = async (payload: LoginRequest) => {
         const data = await loginRequest(payload);

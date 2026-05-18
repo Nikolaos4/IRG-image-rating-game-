@@ -1,0 +1,29 @@
+.news-page {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .news-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        & > * {
+            display: block;
+        }
+
+        textarea {
+            resize: vertical;
+            border: 1px solid var(--color-border-colored);
+            background-color: var(--color-background-colored);
+            border-radius: 16px;
+            min-height: 40px;
+            font-family: inherit;
+            padding: 8px;
+
+            &::placeholder {
+                color: var(--color-text-secondary-colored);
+            }
+        }
+    }
+}
